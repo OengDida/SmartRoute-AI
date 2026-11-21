@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { Activity, ArrowDownRight, ArrowLeft, ArrowRight, BatteryCharging, Bike, CarFront, Check, ChevronDown, ChevronLeft, ChevronRight, CircleDollarSign, Clock3, Fuel, Gauge, Github, Info, LocateFixed, Leaf, Map as MapIcon, MapPin, Navigation, PlugZap, Route, Search, ShieldAlert, Sparkles, Truck, Zap } from 'lucide-react'
+import { Activity, ArrowDownRight, ArrowLeft, ArrowRight, BatteryCharging, Bike, CarFront, Check, ChevronDown, ChevronLeft, ChevronRight, CircleDollarSign, Clock3, Fuel, Gauge, Github, Info, LocateFixed, Leaf, Map as MapIcon, MapPin, Moon, Navigation, PlugZap, Route, Search, ShieldAlert, Sun, Truck, Zap } from 'lucide-react'
 import MapView from './components/MapView'
 import { computeGoogleRoute, geocodeGoogleAddress, googleMapsErrorMessage, loadGoogleMaps, searchGooglePlaces, searchStationsAlongRoute } from './googleMaps'
 import { vehicleGroups } from './data/vehicles'
@@ -40,7 +40,7 @@ const filterLabel=id=>stationFilters.find(f=>f[0]===id)?.[1]||'Stations'
 const searchLabel={all:'Find stations along this route',ev:'Find EV chargers along this route',gas:'Find gas stations along this route',hybrid:'Find hybrid hubs along this route'}
 const matchesFilter=(s,f)=>f==='all'||(f==='ev'&&s.type!=='gas_only')||(f==='gas'&&s.type!=='ev_only')||(f==='hybrid'&&s.type==='hybrid_hub')
 const typeBadge={ev_only:['EV','text-blue-300'],gas_only:['Gas','text-amberx'],hybrid_hub:['Hybrid hub','text-violet-300']}
-function Panel({children,className=''}){return <div className={cx('glass rounded-2xl border border-white/10 shadow-2xl',className)}>{children}</div>}
+function Panel({children,className=''}){return <div className={cx('glass rounded-xl border border-white/10 shadow-sm',className)}>{children}</div>}
 function Pill({children,active,onClick}){return <button onClick={onClick} className={cx('rounded-full px-3 py-2 text-xs font-semibold transition',active?'bg-emeraldx text-ink':'bg-white/5 text-slate-300 hover:bg-white/10')}>{children}</button>}
 function Field({label,children}){return <label className="block space-y-2"><span className="text-xs font-semibold uppercase tracking-wider text-slate-400">{label}</span>{children}</label>}
 function Select({value,onChange,children}){return <div className="relative"><select value={value} onChange={e=>onChange(e.target.value)} className="field w-full appearance-none pr-9">{children}</select><ChevronDown size={16} className="pointer-events-none absolute right-3 top-3.5 text-slate-400"/></div>}
@@ -231,38 +231,59 @@ const repo='https://github.com/OengDida/SmartRoute-AI'
 function FooterCol({title,children}){return <div><div className="mb-2 text-sm font-bold text-white">{title}</div><ul className="space-y-0.5">{children}</ul></div>}
 function FLink({href,onClick,external,children}){return <li><a href={href} onClick={onClick?e=>{e.preventDefault();onClick()}:undefined} {...(external?{target:'_blank',rel:'noopener noreferrer'}:{})} className="text-sm leading-6 text-slate-400 transition hover:text-emeraldx">{children}</a></li>}
 function FText({children}){return <li className="text-sm leading-6 text-slate-500">{children}</li>}
-function Welcome({onStart,onRoute}){return <main className="welcome min-h-screen overflow-hidden px-5 text-white">
-  <div className="absolute inset-0 bg-grid opacity-30"/>
-  <div className="relative mx-auto flex min-h-screen max-w-6xl flex-col">
-    <header className="flex items-center gap-3 py-7"><img src="/favicon.svg" alt="SmartRoute AI logo" className="h-11 w-11 object-contain [filter:drop-shadow(0_0_12px_rgba(32,214,154,0.35))]"/><div><div className="text-xl font-black tracking-tight">SmartRoute <span className="text-emeraldx">AI</span></div><div className="text-[10px] uppercase tracking-[.24em] text-slate-500">Cambodia mobility intelligence</div></div></header>
-    <section className="grid flex-1 items-center gap-12 py-12 lg:grid-cols-[1.05fr_.95fr]">
-      <div className="max-w-2xl"><div className="mb-6 inline-flex items-center gap-2 rounded-full border border-emeraldx/25 bg-emeraldx/10 px-4 py-2 text-xs font-semibold text-emeraldx"><Sparkles size={14}/> Built for Cambodia's highways</div>
-        <h1 className="text-5xl font-black leading-[1.06] tracking-tight sm:text-7xl">Every kilometer.<br/><span className="text-emeraldx">Smarter.</span></h1>
-        <p className="mt-7 max-w-xl text-lg leading-8 text-slate-300">AI-Powered Multi-Fuel Highway & Range Planner for Cambodia. Prevent dead-zones, find EV chargers & gas pumps, and optimize trip costs in KHR & USD.</p>
-        <div className="mt-9 flex flex-wrap gap-3"><button onClick={onStart} className="flex items-center gap-3 rounded-xl bg-emeraldx px-6 py-4 font-extrabold text-ink shadow-glow transition hover:-translate-y-0.5 hover:bg-emerald-300">Launch SmartRoute AI <ArrowRight size={18}/></button><div className="flex items-center gap-2 rounded-xl border border-white/10 px-4 py-3 text-sm text-slate-400"><ShieldAlert size={16} className="text-amberx"/> Plan ahead. Arrive prepared.</div></div>
-        <div className="mt-12 grid max-w-lg grid-cols-3 gap-4 border-t border-white/10 pt-6"><div><div className="text-2xl font-black">25+</div><div className="text-xs text-slate-500">Station pins</div></div><div><div className="text-2xl font-black">5</div><div className="text-xs text-slate-500">Powertrains</div></div><div><div className="text-2xl font-black">៛ / $</div><div className="text-xs text-slate-500">Dual currency</div></div></div>
+function BrandHeader({theme,onToggleTheme,action,rightAction,className=''}){
+  const nextTheme=theme==='light'?'dark':'light'
+  return <header className={cx('app-header',className)}>
+    {action}
+    <div className="brand-lockup">
+      <img src="/favicon.svg" alt="" className="brand-mark"/>
+      <div><div className="brand-name">SmartRoute <span>AI</span></div><div className="brand-caption">Cambodia trip planner</div></div>
+    </div>
+    <div className="header-spacer"/>
+    {rightAction}
+    <button type="button" onClick={onToggleTheme} className="theme-toggle" aria-label={`Switch to ${nextTheme} mode`} aria-pressed={theme==='dark'} title={`Switch to ${nextTheme} mode`}>
+      {theme==='light'?<Moon size={16}/>:<Sun size={16}/>}<span>{nextTheme==='dark'?'Dark':'Light'}</span>
+    </button>
+  </header>
+}
+function Welcome({onStart,onRoute,theme,onToggleTheme}){return <main className="welcome min-h-screen px-5">
+  <div className="page-frame mx-auto flex min-h-screen max-w-6xl flex-col">
+    <BrandHeader theme={theme} onToggleTheme={onToggleTheme} className="py-6"/>
+    <section className="welcome-layout flex-1 py-8 sm:py-12">
+      <div className="welcome-copy">
+        <div className="eyebrow">CAMBODIA TRIP PLANNER</div>
+        <h1>Plan around the road, the range, and the cost.</h1>
+        <p className="welcome-description">Set up your vehicle, choose a starting point and destination, then review route distance, range, stops, and estimated trip cost.</p>
+        <div className="welcome-actions">
+          <button onClick={onStart} className="primary-action">Start a trip <ArrowRight size={17}/></button>
+          <span className="welcome-note"><ShieldAlert size={16}/> Estimates only. Check conditions before departure.</span>
+        </div>
       </div>
-      <div className="relative hidden lg:block"><div className="absolute -inset-10 rounded-full bg-emeraldx/10 blur-3xl"/><div className="relative rounded-[2rem] border border-white/10 bg-slate-900/70 p-5 shadow-2xl">
-        <div className="mb-4 flex items-center justify-between"><span className="text-sm font-bold">Live route preview</span><span className="rounded-full bg-emeraldx/10 px-3 py-1 text-[10px] font-bold text-emeraldx">CAMBODIA</span></div>
-        <div className="map-art relative h-[390px] overflow-hidden rounded-2xl border border-white/10"><svg viewBox="0 0 500 390" className="h-full w-full"><path d="M40 70 C130 120 110 170 180 195 S260 235 270 315 S370 340 440 280" fill="none" stroke="#20d69a" strokeWidth="5" strokeDasharray="2 10" strokeLinecap="round"/><path d="M15 290 C120 245 160 280 220 210 S350 120 480 145" fill="none" stroke="#334d46" strokeWidth="2"/><path d="M60 40 L440 350 M30 200 L470 60 M120 0 L390 390" stroke="#203a32" strokeWidth="1"/><circle cx="40" cy="70" r="10" fill="#20d69a"/><circle cx="440" cy="280" r="10" fill="#f7b84b"/><circle cx="260" cy="230" r="7" fill="#53b7ff"/><circle cx="270" cy="315" r="7" fill="#b69cff"/></svg><div className="absolute left-5 top-5 rounded-xl border border-white/10 bg-ink/80 px-3 py-2 text-xs"><div className="font-bold">Phnom Penh</div><div className="text-slate-400">Origin</div></div><div className="absolute bottom-5 right-5 rounded-xl border border-white/10 bg-ink/80 px-3 py-2 text-xs"><div className="font-bold">Siem Reap</div><div className="text-slate-400">Destination</div></div><div className="absolute bottom-5 left-5 rounded-xl bg-blue-400/15 px-3 py-2 text-xs text-blue-200">⚡ Charging stop</div></div>
-        <div className="mt-4 grid grid-cols-3 gap-2 text-center"><div className="rounded-xl bg-white/5 p-3"><Route size={16} className="mx-auto mb-2 text-emeraldx"/><b className="text-sm">Route</b><p className="text-[10px] text-slate-500">Google Routes</p></div><div className="rounded-xl bg-white/5 p-3"><BatteryCharging size={16} className="mx-auto mb-2 text-blue-300"/><b className="text-sm">Range</b><p className="text-[10px] text-slate-500">Dead-zone alerts</p></div><div className="rounded-xl bg-white/5 p-3"><CircleDollarSign size={16} className="mx-auto mb-2 text-amberx"/><b className="text-sm">Cost</b><p className="text-[10px] text-slate-500">KHR + USD</p></div></div>
-      </div></div>
+      <aside className="welcome-overview" aria-label="Trip planning steps">
+        <div className="overview-heading"><span>TRIP SETUP</span><span>VEHICLE → ROUTE</span></div>
+        <ol className="flow-list">
+          <li><span className="flow-marker" aria-hidden="true"/><div><b>Vehicle profile</b><p>Choose a preset or enter your own figures.</p></div></li>
+          <li><span className="flow-marker" aria-hidden="true"/><div><b>Location access</b><p>Set your current position for the map.</p></div></li>
+          <li><span className="flow-marker" aria-hidden="true"/><div><b>Route and estimates</b><p>Review range, stations, distance, and cost.</p></div></li>
+        </ol>
+        <div className="overview-foot"><span>Five powertrains</span><span>KHR + USD estimates</span><span>Route-aware station search</span></div>
+      </aside>
     </section>
-    <footer className="border-t border-white/10 pt-12">
-      <div className="grid gap-10 lg:grid-cols-[minmax(0,1fr)_minmax(0,2fr)]">
-        <div><div className="flex items-center gap-3"><img src="/favicon.svg" alt="SmartRoute AI logo" className="h-9 w-9 object-contain"/><div className="text-lg font-black tracking-tight">SmartRoute <span className="text-emeraldx">AI</span></div></div><p className="mt-4 max-w-xs text-sm leading-6 text-slate-500">Highway range and trip-cost planning for Cambodia. Plan ahead. Arrive prepared.</p><div className="mt-6 flex gap-3"><a href={repo} target="_blank" rel="noopener noreferrer" aria-label="SmartRoute AI on GitHub" className="grid h-10 w-10 place-items-center rounded-full border border-white/10 text-slate-400 transition hover:border-emeraldx/50 hover:text-emeraldx"><Github size={18}/></a></div></div>
-        <div className="grid grid-cols-2 gap-x-8 gap-y-10 sm:grid-cols-4">
-          <FooterCol title="Planner"><FLink href="/vehicle" onClick={onStart}>Launch SmartRoute AI</FLink><FLink href="/vehicle" onClick={onStart}>Vehicle profile</FLink><FLink href="/route" onClick={onRoute}>Map &amp; route</FLink></FooterCol>
+    <footer className="welcome-footer border-t border-white/10 pt-8">
+      <div className="footer-layout">
+        <div><div className="footer-brand"><img src="/favicon.svg" alt=""/><div className="brand-name">SmartRoute <span>AI</span></div></div><p className="mt-3 max-w-xs text-sm leading-6 text-slate-500">Highway range and trip-cost planning for Cambodia.</p><div className="mt-4 flex gap-3"><a href={repo} target="_blank" rel="noopener noreferrer" aria-label="SmartRoute AI on GitHub" className="footer-social"><Github size={18}/></a></div></div>
+        <div className="footer-links">
+          <FooterCol title="Planner"><FLink href="/vehicle" onClick={onStart}>Start a trip</FLink><FLink href="/vehicle" onClick={onStart}>Vehicle profile</FLink><FLink href="/route" onClick={onRoute}>Map &amp; route</FLink></FooterCol>
           <FooterCol title="Powertrains"><FText>Electric</FText><FText>Hybrid</FText><FText>Gasoline</FText><FText>Diesel</FText><FText>Motorbike</FText></FooterCol>
           <FooterCol title="Data &amp; maps"><FLink href="https://developers.google.com/maps/documentation/javascript" external>Google Maps &amp; Places</FLink><FLink href="https://developers.google.com/maps/documentation/javascript/routes/get-a-route" external>Google Routes</FLink><FLink href={repo+'/blob/main/src/data/places.js'} external>Station data</FLink></FooterCol>
           <FooterCol title="Project"><FLink href={repo} external>GitHub</FLink><FLink href={repo+'/issues'} external>Report an issue</FLink><FLink href="/sitemap.xml" external>Sitemap</FLink></FooterCol>
         </div>
       </div>
-      <div className="mt-12 flex flex-wrap justify-between gap-x-6 gap-y-2 border-t border-white/10 py-6 text-[11px] leading-5 text-slate-500"><span>© 2026 SmartRoute AI · Cambodia trip intelligence</span><span className="max-w-xl sm:text-right">Estimates only. Station data is a curated dataset, not a live directory. Verify fuel and charger availability before you travel.</span></div>
+      <div className="footer-legal mt-8 flex flex-wrap justify-between gap-x-6 gap-y-2 border-t border-white/10 py-5 text-[11px] leading-5 text-slate-500"><span>© 2026 SmartRoute AI · Cambodia trip planning</span><span className="max-w-xl sm:text-right">Estimates only. Station data is a curated dataset, not a live directory. Verify fuel and charger availability before you travel.</span></div>
     </footer>
   </div>
 </main>}
-function LocationGate({onSuccess,onBack}) {
+function LocationGate({onSuccess,onBack,theme,onToggleTheme}) {
   const [loading,setLoading]=useState(false)
   const [error,setError]=useState('')
   const requestRef=useRef(null)
@@ -324,13 +345,11 @@ function LocationGate({onSuccess,onBack}) {
     },
   }[error]
 
-  return <main className="welcome relative grid min-h-[100dvh] place-items-center overflow-hidden px-5 py-8 text-white">
-    <div className="pointer-events-none absolute inset-0 bg-grid opacity-30"/>
-    <header className="absolute left-5 right-5 top-5 z-10 mx-auto flex max-w-6xl items-center gap-3 sm:left-8 sm:right-8">
-      <img src="/favicon.svg" alt="" className="h-10 w-10 object-contain [filter:drop-shadow(0_0_12px_rgba(32,214,154,0.35))]"/>
-      <div><div className="text-lg font-black tracking-tight">SmartRoute <span className="text-emeraldx">AI</span></div><div className="text-[9px] uppercase tracking-[.22em] text-slate-500">Cambodia trip planner</div></div>
-    </header>
-    <section className="relative w-full max-w-lg pt-14">
+  return <main className="location-screen min-h-[100dvh] px-5 py-4 sm:px-8">
+    <div className="mx-auto flex min-h-[calc(100dvh-2rem)] max-w-6xl flex-col">
+    <BrandHeader theme={theme} onToggleTheme={onToggleTheme} className="py-3"/>
+    <section className="grid flex-1 place-items-center py-8">
+    <div className="relative w-full max-w-lg">
       <Panel className="p-6 text-center shadow-2xl sm:p-9">
         <div className="mx-auto grid h-14 w-14 place-items-center rounded-2xl border border-emeraldx/20 bg-emeraldx/10 text-emeraldx shadow-glow"><MapPin size={25}/></div>
         <div className="mt-5 text-[10px] font-bold uppercase tracking-[.2em] text-emeraldx">Location access · required to continue</div>
@@ -349,11 +368,11 @@ function LocationGate({onSuccess,onBack}) {
         <button onClick={onBack} className="mt-5 inline-flex items-center gap-2 rounded-lg px-3 py-2 text-xs font-semibold text-slate-400 transition hover:text-white"><ArrowLeft size={14}/>Back to SmartRoute</button>
         <p className="mt-4 text-[10px] leading-4 text-slate-500">Location is used to show your position on the trip map. You can change browser permissions any time.</p>
       </Panel>
-      <div className="mt-5 text-center text-[10px] text-slate-500">Plan ahead. Arrive prepared.</div>
-    </section>
+      <div className="mt-5 text-center text-[10px] text-slate-500">Location is required to center the trip map.</div>
+    </div></section></div>
   </main>
 }
-function Setup({onBack,onGenerate,config,setConfig}) {
+function Setup({onBack,onGenerate,config,setConfig,theme,onToggleTheme}) {
   const [vehicleSearch,setVehicleSearch]=useState('')
   const [selectedBrand,setSelectedBrand]=useState('')
   const [showAllBrands,setShowAllBrands]=useState(false)
@@ -367,11 +386,12 @@ function Setup({onBack,onGenerate,config,setConfig}) {
   const set=(key,value)=>setConfig(p=>({...p,[key]:value}))
   useEffect(()=>{if(!config.modified&&selected)setConfig(p=>({...p,energy:selected.energy,capacity:selected.capacity,consumption:selected.consumption,model:selected.id}))},[config.category,config.model,config.modified])
   const Icon=categoryIcons[config.category]||CarFront
-  return <div className="min-h-screen bg-ink px-4 py-6 text-white sm:px-8"><div className="mx-auto max-w-5xl">
-    <button onClick={onBack} className="mb-7 flex items-center gap-2 text-sm text-slate-400 hover:text-white"><ArrowLeft size={16}/> Back</button>
+  return <div className="vehicle-screen min-h-screen px-4 py-5 sm:px-8"><div className="mx-auto max-w-6xl">
+    <BrandHeader theme={theme} onToggleTheme={onToggleTheme} className="mb-5 py-2"/>
+    <button onClick={onBack} className="back-link mb-5 flex items-center gap-2 text-sm text-slate-400 hover:text-white"><ArrowLeft size={16}/> Back</button>
     <div className="mb-8"><div className="text-xs font-bold uppercase tracking-[.2em] text-emeraldx">Step 02 / Vehicle profile</div><h1 className="mt-2 text-3xl font-black sm:text-4xl">What are you driving?</h1><p className="mt-2 text-slate-400">We'll use your vehicle's real-world efficiency to estimate range and trip costs.</p></div>
     <div className="grid gap-6 lg:grid-cols-[1.2fr_.8fr]">
-      <Panel className="p-5 sm:p-7"><h2 className="mb-4 font-bold">2A. Select powertrain</h2><div className="grid grid-cols-2 gap-3 sm:grid-cols-3">{vehicleGroups.map(g=>{const I=categoryIcons[g.id];return <button key={g.id} onClick={()=>{setSelectedBrand('');setShowAllBrands(false);setConfig(p=>({...p,category:g.id,model:'',energy:g.items[0].energy,...(p.modified?{}:{capacity:'',consumption:''})}))}} className={cx('rounded-xl border p-4 text-left transition',config.category===g.id?'border-emeraldx bg-emeraldx/10 shadow-glow':'border-white/10 bg-white/[.025] hover:bg-white/5')}><I size={22} className={config.category===g.id?'text-emeraldx':'text-slate-400'}/><div className="mt-3 text-sm font-bold">{g.label}</div><div className="mt-1 text-[11px] text-slate-500">{g.items.length} presets</div></button>})}</div>
+      <Panel className="p-5 sm:p-7"><h2 className="mb-4 font-bold">2A. Select powertrain</h2><div className="grid grid-cols-1 gap-2 sm:grid-cols-2">{vehicleGroups.map(g=>{const I=categoryIcons[g.id];return <button key={g.id} onClick={()=>{setSelectedBrand('');setShowAllBrands(false);setConfig(p=>({...p,category:g.id,model:'',energy:g.items[0].energy,...(p.modified?{}:{capacity:'',consumption:''})}))}} className={cx('flex min-h-14 items-center gap-3 rounded-lg border px-3 py-2.5 text-left transition',config.category===g.id?'border-emeraldx bg-emeraldx/10':'border-white/10 bg-white/[.025] hover:bg-white/5')}><I size={18} className={config.category===g.id?'text-emeraldx':'text-slate-400'}/><div className="min-w-0 flex-1"><div className="text-sm font-bold">{g.label}</div><div className="text-[11px] text-slate-500">{g.items.length} presets</div></div>{config.category===g.id&&<Check size={15} className="text-emeraldx"/>}</button>})}</div>
       <div className="my-7 border-t border-white/10"/>
       <div className="flex flex-wrap items-center justify-between gap-3"><h2 className="font-bold">2B. Vehicle configuration</h2><div className="flex rounded-xl bg-black/20 p-1"><button onClick={()=>setConfig(p=>({...p,modified:false,...(p.model?{}:{capacity:'',consumption:''})}))} className={cx('rounded-lg px-4 py-2 text-xs font-bold',!config.modified?'bg-emeraldx text-ink':'text-slate-400')}>Stock</button><button onClick={()=>set('modified',true)} className={cx('rounded-lg px-4 py-2 text-xs font-bold',config.modified?'bg-emeraldx text-ink':'text-slate-400')}>Modified</button></div></div>
       {!config.modified?<div className="mt-5 space-y-4">{!group?<p className="rounded-xl border border-white/10 bg-black/20 p-4 text-xs leading-5 text-slate-400">Select a powertrain above, then choose your vehicle.</p>:<><div className="rounded-xl border border-white/10 bg-black/20 p-4"><div className="mb-4 text-sm font-bold">Brand</div><div className="grid grid-cols-4 gap-x-2 gap-y-4 sm:hidden">{mobileBrands.map(renderBrand)}</div><div className="hidden grid-cols-6 gap-x-2 gap-y-4 sm:grid">{desktopBrands.map(renderBrand)}</div>{brands.length>8&&<button type="button" onClick={()=>setShowAllBrands(value=>!value)} className="mt-4 w-full rounded-lg bg-white/[.08] py-3 text-sm font-semibold text-slate-400 transition hover:bg-white/10 hover:text-white sm:hidden">{showAllBrands?'Show Less':'View More'}</button>}{brands.length>12&&<button type="button" onClick={()=>setShowAllBrands(value=>!value)} className="mt-4 hidden w-full rounded-lg bg-white/[.08] py-3 text-sm font-semibold text-slate-400 transition hover:bg-white/10 hover:text-white sm:block">{showAllBrands?'Show Less':'View More'}</button>}</div><Field label="Search vehicles"><div className="relative"><Search size={15} className="pointer-events-none absolute left-3 top-3.5 text-slate-400"/><input className="field w-full !pl-9" type="search" value={vehicleSearch} onChange={e=>setVehicleSearch(e.target.value)} placeholder="Search by make or model" autoComplete="off"/></div></Field><div className="-mt-2 max-h-56 overflow-y-auto rounded-xl border border-white/10 bg-black/30 p-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">{vehicleOptions.length?vehicleOptions.map(v=><button type="button" key={v.id} onClick={()=>setConfig(p=>({...p,model:v.id,energy:v.energy,capacity:v.capacity,consumption:v.consumption}))} className={cx('block w-full rounded-lg px-3 py-2 text-left transition hover:bg-white/5',config.model===v.id&&'bg-emeraldx/10')}><span className="block text-xs font-semibold">{v.name}</span><span className="mt-0.5 block text-[10px] text-slate-500">{v.note}</span></button>):<div className="px-3 py-3 text-xs text-slate-500">No vehicles match “{vehicleSearch}”. Try another search.</div>}</div></>}{selected&&<div className="rounded-xl border border-emeraldx/15 bg-emeraldx/5 p-4"><div className="flex items-center gap-2 text-sm font-bold text-emeraldx"><Icon size={17}/>{selected?.name}</div><div className="mt-3 grid grid-cols-2 gap-3"><div><div className="text-[10px] uppercase text-slate-500">Capacity</div><b>{config.capacity} {config.energy==='electric'?'kWh':'L'}</b></div><div><div className="text-[10px] uppercase text-slate-500">Consumption</div><b>{config.consumption} {config.energy==='electric'?'kWh':'L'}/100km</b></div></div></div>}</div>
@@ -395,7 +415,7 @@ const loadTripSnapshot=()=>{
     }
   }catch{return null}
 }
-function TripPlanner({config,onChangeVehicle,initialLocation}) {
+function TripPlanner({config,onChangeVehicle,initialLocation,theme,onToggleTheme}) {
   const [savedTrip]=useState(loadTripSnapshot)
   const [originName,setOriginName]=useState(()=>savedTrip?.originName||(initialLocation?'Current location':''))
   const [destinationName,setDestinationName]=useState(()=>savedTrip?.destinationName||'')
@@ -588,11 +608,9 @@ function TripPlanner({config,onChangeVehicle,initialLocation}) {
         <Panel className="p-4"><div className="mb-3 flex items-center gap-2 text-xs font-extrabold"><Activity size={15} className="text-emeraldx"/> Range & dead-zone monitor</div><div className="flex items-end justify-between"><span className="text-[10px] text-slate-500">Estimated remaining range</span><b className={lowRange?'text-rose-300':'text-emeraldx'}>{fmt(currentRange)} km</b></div><div className="mt-2 h-2 overflow-hidden rounded-full bg-white/10"><div className={cx('h-full rounded-full',lowRange?'bg-rose-400':'bg-emeraldx')} style={{width:`${hasGoogleRoute&&currentRange>0?Math.min(100,distance/currentRange*100):0}%`}}/></div><div className="mt-2 text-[10px] leading-4 text-slate-400">{!origin||!destination?'Choose an origin and destination to check range.':!hasGoogleRoute?'Waiting for a Google driving route.':lowRange?'Range limit falls before destination.':'Estimated range covers the route.'}</div></Panel>
         {stationFinderPanel}
         <div className="rounded-xl border border-white/10 bg-ink/85 p-3 text-[10px] leading-4 text-slate-400 backdrop-blur"><Info size={13} className="mb-1 text-amberx"/> Blue line, distance, and drive time come from Google Routes (traffic-aware when available). If Google cannot calculate a route, no substitute route or ETA is shown. Use “Pin (choose on map)” to set a custom waypoint.</div></>
-  return <div className="relative h-[100dvh] min-h-0 w-full overflow-hidden bg-slate-950 text-white lg:min-h-[720px]">
+  return <div className="planner-screen relative h-[100dvh] min-h-0 w-full overflow-hidden bg-slate-950 text-white lg:min-h-[720px]">
     <div className={cx('absolute inset-0',mapClickMode&&'pick-mode')}><MapView origin={origin} destination={destination} route={routePoints} stations={googleStations??[]} filter={filter} onMapClick={handleMapClick} rangePoint={rangePoint} initialLocation={initialLocation}/></div>
-    <div className="pointer-events-none absolute inset-0 z-[400] bg-gradient-to-r from-ink/35 via-transparent to-transparent"/>
-    <div className="pointer-events-none absolute left-1 top-4 z-[500] flex items-center gap-2"><button onClick={onChangeVehicle} aria-label="Back to vehicle profile" className="pointer-events-auto flex h-[52px] items-center gap-2 rounded-xl border border-white/10 bg-ink/90 px-3 text-xs font-bold shadow-xl backdrop-blur transition hover:border-emeraldx/50 hover:text-emeraldx"><ArrowLeft size={16}/> Back</button><div className="flex items-center gap-2 rounded-xl border border-white/10 bg-ink/90 px-3 py-2 shadow-xl backdrop-blur"><img src="/favicon.svg" alt="SmartRoute AI logo" className="h-8 w-8 object-contain"/><div className="hidden sm:block"><div className="text-sm font-black">SmartRoute <span className="text-emeraldx">AI</span></div><div className="text-[9px] uppercase tracking-widest text-slate-500">Cambodia trip planner</div></div></div></div>
-    <div className="pointer-events-none absolute right-1 top-4 z-[500] flex gap-2 lg:hidden"><button onClick={()=>setShowLeft(x=>!x)} aria-label={showLeft?'Hide menu and show map':'Show menu'} className="pointer-events-auto flex h-[52px] items-center gap-2 rounded-xl border border-white/10 bg-ink/90 px-3 text-xs font-bold shadow-xl backdrop-blur hover:border-emeraldx/50">{showLeft?<><MapIcon size={16}/> Map</>:<><Route size={16}/> Plan</>}</button></div>
+    <BrandHeader theme={theme} onToggleTheme={onToggleTheme} className="planner-header" action={<button onClick={onChangeVehicle} aria-label="Back to vehicle profile" className="header-action"><ArrowLeft size={16}/><span>Vehicle</span></button>} rightAction={<button onClick={()=>setShowLeft(x=>!x)} aria-label={showLeft?'Hide menu and show map':'Show menu'} className="mobile-plan-toggle"><span className="mobile-plan-label">{showLeft?'Map':'Plan'}</span>{showLeft?<MapIcon size={16}/>:<Route size={16}/>}</button>}/>
     <div className="absolute left-1 right-1 top-[76px] z-[500] flex items-end justify-between gap-4 pointer-events-none lg:items-start" style={{bottom:'max(4px, env(safe-area-inset-bottom))'}}>
       <div className={cx('pointer-events-auto h-full min-h-0 max-h-full w-full overflow-y-auto overscroll-contain pb-4 lg:h-auto lg:max-w-[390px] [direction:rtl] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden',!showLeft&&'hidden')}><div className="flex flex-col gap-3 [direction:ltr]">
         <Panel className="p-4">
@@ -607,7 +625,7 @@ function TripPlanner({config,onChangeVehicle,initialLocation}) {
           <div className="mt-2 text-center text-[10px] text-slate-500">{routeStatus}</div>
         </Panel>
         <Panel className="p-4">
-          <div className="mb-3 flex items-center gap-2"><Sparkles size={16} className="text-emeraldx"/><div className="text-sm font-extrabold">SmartRoute AI Co-Pilot</div><span className="ml-auto rounded-full bg-emeraldx/10 px-2 py-1 text-[9px] font-bold text-emeraldx">RULE-BASED</span></div>
+          <div className="mb-3 flex items-center gap-2"><Route size={16} className="text-emeraldx"/><div className="text-sm font-extrabold">Trip guidance</div><span className="ml-auto rounded-full bg-emeraldx/10 px-2 py-1 text-[9px] font-bold text-emeraldx">RULE-BASED</span></div>
           <p className="text-xs leading-5 text-slate-300">{recommendation()}</p>
           {lowRange&&<div className="mt-3 flex items-start gap-2 rounded-xl border border-rose-400/25 bg-rose-400/10 p-3 text-[11px] leading-4 text-rose-200"><ShieldAlert size={16} className="shrink-0"/> Range warning: estimated range is shorter than the trip. Do not depart without a confirmed stop.</div>}
           <div className="mt-3 flex flex-wrap gap-2">{chips.map(c=><button key={c} onClick={()=>chipAction(c)} className="rounded-full border border-white/10 px-2.5 py-1.5 text-[10px] text-slate-300 hover:border-emeraldx/40 hover:text-emeraldx">{c}</button>)}</div>
@@ -641,6 +659,15 @@ const stepFromPath=()=>{
 }
 export default function App(){
   const [step,setStepState]=useState(stepFromPath)
+  const [theme,setTheme]=useState(()=>document.documentElement.dataset.theme||'light')
+  const toggleTheme=()=>{
+    const next=theme==='light'?'dark':'light'
+    document.documentElement.dataset.theme=next
+    document.documentElement.style.colorScheme=next
+    try{localStorage.setItem('smartroute-theme',next)}catch{}
+    setTheme(next)
+  }
+  useEffect(()=>{document.querySelector('meta[name="theme-color"]')?.setAttribute('content',theme==='dark'?'#1E252B':'#F4F6F4')},[theme])
   const [config,setConfig]=useState(defaultVehicleConfig)
   const [tripConfig,setTripConfig]=useState(defaultVehicleConfig)
   // Coordinates are deliberately session-only: a stored fix must never bypass
@@ -715,10 +742,10 @@ export default function App(){
   }
   const visibleStep=step===3&&!initialLocation?2:step
   return visibleStep===0
-    ?<Welcome onStart={startSmartRoute} onRoute={()=>goToMap(0)}/>
+    ?<Welcome onStart={startSmartRoute} onRoute={()=>goToMap(0)} theme={theme} onToggleTheme={toggleTheme}/>
     :visibleStep===1
-      ?<Setup onBack={()=>setStep(0)} onGenerate={continueToMap} config={config} setConfig={setConfig}/>
+      ?<Setup onBack={()=>setStep(0)} onGenerate={continueToMap} config={config} setConfig={setConfig} theme={theme} onToggleTheme={toggleTheme}/>
       :visibleStep===2
-        ?<LocationGate onSuccess={finishLocation} onBack={()=>setStep(gateBackStep)}/>
-        :<TripPlanner config={tripConfig} initialLocation={initialLocation} onChangeVehicle={()=>setStep(1)}/>
+        ?<LocationGate onSuccess={finishLocation} onBack={()=>setStep(gateBackStep)} theme={theme} onToggleTheme={toggleTheme}/>
+        :<TripPlanner config={tripConfig} initialLocation={initialLocation} onChangeVehicle={()=>setStep(1)} theme={theme} onToggleTheme={toggleTheme}/>
 }
