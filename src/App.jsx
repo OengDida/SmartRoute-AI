@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { Activity, ArrowDownRight, ArrowLeft, ArrowRight, BatteryCharging, Bike, CarFront, Check, ChevronDown, ChevronLeft, ChevronRight, ChevronUp, Layers, CircleDollarSign, Clock3, Fuel, Gauge, Github, Info, LocateFixed, Leaf, Map as MapIcon, MapPin, Moon, Navigation, PlugZap, Route, Search, ShieldAlert, Sun, Truck, Zap } from 'lucide-react'
+import { Activity, ArrowDownRight, ArrowLeft, ArrowRight, BatteryCharging, Bike, CarFront, Check, ChevronDown, ChevronLeft, ChevronRight, ChevronUp, Layers, Maximize2, Minimize2, CircleDollarSign, Clock3, Fuel, Gauge, Github, Info, LocateFixed, Leaf, Map as MapIcon, MapPin, Moon, Navigation, PlugZap, Route, Search, ShieldAlert, Sun, Truck, Zap } from 'lucide-react'
 import MapView from './components/MapView'
 import { computeGoogleRoute, geocodeGoogleAddress, googleMapsErrorMessage, loadGoogleMaps, searchGooglePlaces, searchStationsAlongRoute } from './googleMaps'
 import { vehicleGroups } from './data/vehicles'
@@ -419,6 +419,19 @@ function TripPlanner({config,onChangeVehicle,initialLocation,theme,onToggleTheme
   const [savedTrip]=useState(loadTripSnapshot)
   const [mobilePanelExpanded,setMobilePanelExpanded]=useState(()=>window.matchMedia('(min-width: 768px)').matches)
   const [mapType,setMapType]=useState('roadmap')
+  const plannerScreenRef=useRef(null)
+  const [mapFullscreen,setMapFullscreen]=useState(false)
+  useEffect(()=>{
+    const syncFullscreen=()=>setMapFullscreen(document.fullscreenElement===plannerScreenRef.current)
+    document.addEventListener('fullscreenchange',syncFullscreen)
+    return ()=>document.removeEventListener('fullscreenchange',syncFullscreen)
+  },[])
+  const togglePlannerFullscreen=()=>{
+    const screen=plannerScreenRef.current
+    if(!screen)return
+    const result=document.fullscreenElement===screen?document.exitFullscreen?.():screen.requestFullscreen?.()
+    result?.catch?.(()=>{})
+  }
   const [originName,setOriginName]=useState(()=>savedTrip?.originName||(initialLocation?'Current location':''))
   const [destinationName,setDestinationName]=useState(()=>savedTrip?.destinationName||'')
   const [origin,setOrigin]=useState(()=>savedTrip?.origin||(initialLocation?{lat:initialLocation.lat,lng:initialLocation.lng,name:'Current location',isCurrentLocation:true}:null))
@@ -610,9 +623,13 @@ function TripPlanner({config,onChangeVehicle,initialLocation,theme,onToggleTheme
         <Panel className="p-4"><div className="mb-3 flex items-center gap-2 text-xs font-extrabold"><Activity size={15} className="text-emeraldx"/> Range & dead-zone monitor</div><div className="flex items-end justify-between"><span className="text-[10px] text-slate-500">Estimated remaining range</span><b className={lowRange?'text-rose-300':'text-emeraldx'}>{fmt(currentRange)} km</b></div><div className="mt-2 h-2 overflow-hidden rounded-full bg-white/10"><div className={cx('h-full rounded-full',lowRange?'bg-rose-400':'bg-emeraldx')} style={{width:`${hasGoogleRoute&&currentRange>0?Math.min(100,distance/currentRange*100):0}%`}}/></div><div className="mt-2 text-[10px] leading-4 text-slate-400">{!origin||!destination?'Choose an origin and destination to check range.':!hasGoogleRoute?'Waiting for a Google driving route.':lowRange?'Range limit falls before destination.':'Estimated range covers the route.'}</div></Panel>
         {stationFinderPanel}
         <div className="rounded-xl border border-white/10 bg-ink/85 p-3 text-[10px] leading-4 text-slate-400 backdrop-blur"><Info size={13} className="mb-1 text-amberx"/> Blue line, distance, and drive time come from Google Routes (traffic-aware when available). If Google cannot calculate a route, no substitute route or ETA is shown. Use “Pin (choose on map)” to set a custom waypoint.</div></>
-  return <div className="planner-screen relative h-[100dvh] min-h-[480px] w-full overflow-hidden bg-slate-950 text-white lg:min-h-[720px]" style={{'--mobile-panel-height':mobilePanelExpanded?'80dvh':'max(22dvh, 140px)'}}>
+  return <div ref={plannerScreenRef} className="planner-screen relative h-[100dvh] min-h-[480px] w-full overflow-hidden bg-slate-950 text-white lg:min-h-[720px]" style={{'--mobile-panel-height':mobilePanelExpanded?'80dvh':'max(22dvh, 140px)'}}>
     <div className={cx('absolute inset-0',mapClickMode&&'pick-mode')}><MapView origin={origin} destination={destination} route={routePoints} stations={googleStations??[]} filter={filter} onMapClick={handleMapClick} rangePoint={rangePoint} initialLocation={initialLocation} mapType={mapType} onMapTypeChange={setMapType}/></div>
-    <BrandHeader theme={theme} onToggleTheme={onToggleTheme} className="planner-header" action={<button onClick={onChangeVehicle} aria-label="Back to vehicle profile" className="header-action"><ArrowLeft size={16}/><span>Vehicle</span></button>} rightAction={<button onClick={()=>setShowLeft(x=>!x)} aria-label={showLeft?'Hide menu and show map':'Show menu'} className="mobile-plan-toggle"><span className="mobile-plan-label">{showLeft?'Map':'Plan'}</span>{showLeft?<MapIcon size={16}/>:<Route size={16}/>}</button>}/>
+    <BrandHeader theme={theme} onToggleTheme={onToggleTheme} className="planner-header" action={<button onClick={onChangeVehicle} aria-label="Back to vehicle profile" className="header-action"><ArrowLeft size={16}/><span>Vehicle</span></button>} rightAction={<>
+      <button type="button" onClick={()=>setMapType(current=>current==='roadmap'?'hybrid':'roadmap')} aria-label={mapType==='roadmap'?'Switch to satellite map':'Switch to street map'} title={mapType==='roadmap'?'Satellite view':'Street view'} className="header-action desktop-map-layer-control"><Layers size={16}/><span>{mapType==='roadmap'?'Satellite':'Map'}</span></button>
+      <button type="button" onClick={togglePlannerFullscreen} aria-label={mapFullscreen?'Exit fullscreen map':'View map fullscreen'} title={mapFullscreen?'Exit fullscreen':'Fullscreen'} className="header-action desktop-map-fullscreen-control">{mapFullscreen?<Minimize2 size={16}/>:<Maximize2 size={16}/>}<span>{mapFullscreen?'Exit fullscreen':'Fullscreen'}</span></button>
+      <button onClick={()=>setShowLeft(x=>!x)} aria-label={showLeft?'Hide menu and show map':'Show menu'} className="mobile-plan-toggle"><span className="mobile-plan-label">{showLeft?'Map':'Plan'}</span>{showLeft?<MapIcon size={16}/>:<Route size={16}/>}</button>
+    </>}/>
     <header className="mobile-map-header" aria-label="Route map controls">
       <button type="button" onClick={onChangeVehicle} aria-label="Back to vehicle profile" className="mobile-map-control mobile-map-back"><ArrowLeft size={18}/></button>
       <div className="mobile-map-brand" aria-label="SmartRoute AI"><img src="/favicon.svg" alt=""/><span>SmartRoute <b>AI</b></span></div>

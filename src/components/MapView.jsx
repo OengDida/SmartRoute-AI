@@ -35,8 +35,8 @@ export default function MapView({ origin, destination, route, stations = [], fil
       const isCompactMap = window.matchMedia('(max-width: 767px)').matches
       instance = new Map(host.current, {
         center: { lat: 12.15, lng: 104.90 }, zoom: 7,
-        mapTypeControl: !isCompactMap, streetViewControl: false, fullscreenControl: !isCompactMap,
-        ...(isCompactMap ? { zoomControl: false, gestureHandling: 'greedy' } : {}),
+        mapTypeControl: false, streetViewControl: false, fullscreenControl: false, zoomControl: false,
+        gestureHandling: isCompactMap ? 'greedy' : 'auto',
         clickableIcons: false,
         styles: [
           { featureType: 'poi', stylers: [{ visibility: 'off' }] },
@@ -51,9 +51,10 @@ export default function MapView({ origin, destination, route, stations = [], fil
       updateMapControls = () => {
         const compact = controlsQuery.matches
         instance.setOptions({
-          mapTypeControl: !compact,
-          fullscreenControl: !compact,
-          zoomControl: !compact,
+          mapTypeControl: false,
+          streetViewControl: false,
+          fullscreenControl: false,
+          zoomControl: false,
           gestureHandling: compact ? 'greedy' : 'auto',
         })
       }

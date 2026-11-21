@@ -311,3 +311,12 @@ input[type=number] { font-variant-numeric: tabular-nums; }
   .planner-mobile-panel[data-expanded="false"] .planner-mobile-sheet-topline { justify-content: flex-end; }
   .map-recenter-fab { bottom: calc(var(--mobile-panel-height, 0px) + 12px); }
 }
+
+/* Desktop app-owned map controls replace Google Maps' built-in chrome. */
+.planner-header .desktop-map-layer-control,
+.planner-header .desktop-map-fullscreen-control { display: none; }
+@media (min-width: 768px) {
+  .planner-header .desktop-map-layer-control,
+  .planner-header .desktop-map-fullscreen-control { display: inline-flex; }
+}
+.planner-screen:fullscreen { width: 100vw; height: 100dvh; min-height: 100dvh; }
