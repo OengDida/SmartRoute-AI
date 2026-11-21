@@ -243,7 +243,7 @@ input[type=number] { font-variant-numeric: tabular-nums; }
 .mobile-map-header, .planner-mobile-sheet-header { display: none; }
 .left-panel-hidden { display: none; }
 @media (max-width: 767px) {
-  .planner-screen { height: 100dvh; min-height: 100dvh; }
+  .planner-screen { position: fixed; top: 0; right: 0; bottom: auto; left: 0; width: 100%; height: 100lvh; min-height: 100lvh; --mobile-browser-gap: max(0px, calc(100lvh - 100dvh)); }
   .planner-header { display: none; }
   .mobile-map-header {
     position: absolute; z-index: 700; top: 0; left: 0; right: 0;
@@ -273,7 +273,7 @@ input[type=number] { font-variant-numeric: tabular-nums; }
 
   .planner-controls-layer { position: absolute; inset: 0; display: block; pointer-events: none; }
   .planner-mobile-panel {
-    position: absolute; z-index: 600; right: 0; bottom: 0; left: 0;
+    position: absolute; z-index: 600; right: 0; bottom: var(--mobile-browser-gap, 0px); left: 0;
     display: flex; width: 100%; max-width: none; height: calc(max(22dvh, 140px) + env(safe-area-inset-bottom)); max-height: none;
     flex-direction: column; overflow: hidden; border: 1px solid var(--border); border-bottom: 0;
     border-radius: 20px 20px 0 0; background: var(--surface); color: var(--text-primary);
@@ -309,7 +309,7 @@ input[type=number] { font-variant-numeric: tabular-nums; }
   .planner-mobile-panel[data-expanded="false"] .planner-mobile-sheet-header { gap: 4px; padding: 4px 12px max(4px, env(safe-area-inset-bottom)); }
   .planner-mobile-panel[data-expanded="false"] .planner-mobile-sheet-title { display: none; }
   .planner-mobile-panel[data-expanded="false"] .planner-mobile-sheet-topline { justify-content: flex-end; }
-  .map-recenter-fab { bottom: calc(var(--mobile-panel-height, 0px) + 12px); }
+  .map-recenter-fab { bottom: calc(var(--mobile-panel-height, 0px) + var(--mobile-browser-gap, 0px) + 12px); }
 }
 
 /* Desktop app-owned map controls replace Google Maps' built-in chrome. */
