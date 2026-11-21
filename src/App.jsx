@@ -423,22 +423,6 @@ function TripPlanner({config,onChangeVehicle,initialLocation,theme,onToggleTheme
   const mobileSheetPointerStart=useRef(null)
   const [mapFullscreen,setMapFullscreen]=useState(false)
   useEffect(()=>{
-    const viewportMeta=document.querySelector('meta[name="viewport"]')
-    if(!viewportMeta)return
-    const original=viewportMeta.getAttribute('content')||'width=device-width, initial-scale=1.0'
-    const mobileQuery=window.matchMedia('(max-width: 767px)')
-    const syncViewport=()=>{
-      const base=original.replace(/,\s*viewport-fit=[^,]+/i,'')
-      viewportMeta.setAttribute('content',mobileQuery.matches?`${base}, viewport-fit=cover`:original)
-    }
-    syncViewport()
-    mobileQuery.addEventListener?.('change',syncViewport)
-    return ()=>{
-      mobileQuery.removeEventListener?.('change',syncViewport)
-      viewportMeta.setAttribute('content',original)
-    }
-  },[])
-  useEffect(()=>{
     const syncFullscreen=()=>setMapFullscreen(document.fullscreenElement===plannerScreenRef.current)
     document.addEventListener('fullscreenchange',syncFullscreen)
     return ()=>document.removeEventListener('fullscreenchange',syncFullscreen)
@@ -742,7 +726,7 @@ export default function App(){
     try{localStorage.setItem('smartroute-theme',next)}catch{}
     setTheme(next)
   }
-  useEffect(()=>{document.querySelector('meta[name="theme-color"]')?.setAttribute('content',theme==='dark'?'#1E252B':'#F4F6F4')},[theme])
+  useEffect(()=>{document.querySelector('meta[name="theme-color"]')?.setAttribute('content',theme==='dark'?'#1D2429':'#F4F6F4')},[theme])
   const [config,setConfig]=useState(defaultVehicleConfig)
   const [tripConfig,setTripConfig]=useState(defaultVehicleConfig)
   // Coordinates are deliberately session-only: a stored fix must never bypass
