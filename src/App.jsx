@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { Activity, ArrowDownRight, ArrowLeft, ArrowRight, BatteryCharging, Bike, CarFront, Check, ChevronDown, ChevronLeft, ChevronRight, CircleDollarSign, Clock3, Fuel, Gauge, Github, Info, LocateFixed, Leaf, Map as MapIcon, MapPin, Moon, Navigation, PlugZap, Route, Search, ShieldAlert, Sparkles, Sun, Truck, Zap } from 'lucide-react'
+import { Activity, ArrowDownRight, ArrowLeft, ArrowRight, BatteryCharging, Bike, CarFront, Check, ChevronDown, ChevronLeft, ChevronRight, CircleDollarSign, Clock3, Fuel, Gauge, Github, Info, LocateFixed, Leaf, Map as MapIcon, MapPin, Navigation, PlugZap, Route, Search, ShieldAlert, Sparkles, Truck, Zap } from 'lucide-react'
 import MapView from './components/MapView'
 import { computeGoogleRoute, geocodeGoogleAddress, googleMapsErrorMessage, loadGoogleMaps, searchGooglePlaces, searchStationsAlongRoute } from './googleMaps'
 import { vehicleGroups } from './data/vehicles'
@@ -10,16 +10,37 @@ import { fmt, haversine, money, nearestOnRoute } from './utils'
 const cx=(...x)=>x.filter(Boolean).join(' ')
 const fmtTime=m=>`${Math.floor(m/60)}h ${Math.round(m%60)}m`
 const categoryIcons={ev:Zap,hybrid:Leaf,gasoline:CarFront,diesel:Truck,motorbike:Bike}
+const knownVehicleBrands=['Land Rover','Mercedes-Benz','Rolls-Royce','Aston Martin','Alfa Romeo','Great Wall','Leapmotor','SsangYong','Mitsubishi','Chevrolet','Volkswagen','Lamborghini','Porsche','Cadillac','Chrysler','Dodge','Subaru','Suzuki','Nissan','Renault','Peugeot','Citroen','Skoda','Toyota','Lexus','Hyundai','Honda','Kawasaki','Ferrari','Bentley','Genesis','Infiniti','Lincoln','Maserati','Hongqi','VinFast','Voltra','Yamaha','Yadea','Zontes','Bajaj','Keeway','Vespa','Kia','Ford','Jeep','BYD','GAC','MG','BMW','Audi','Tesla','Volvo','Geely','Zeekr','Chery','Jaecoo','Deepal','Avatr','XPeng','Xiaomi','Neta','Wuling','Denza','Mazda','Isuzu','RAM','Fiat','Mini','Acura','Polestar','Rivian','Lucid','Buick','GMC','INEOS','Jaguar','Aito','Bajaj','GPX','Hongqi','Kawasaki','Keeway','Li','MG','Voltra','Yadea','Yamaha','Zontes']
+const vehicleBrand=name=>knownVehicleBrands.find(brand=>name.toLowerCase().startsWith(brand.toLowerCase())&&/[\s\d]/.test(name[brand.length]||' '))||name.split(' ')[0]
+const brandLogoDomains={'Acura':'acura.com','Aito':'aito.auto','Alfa Romeo':'alfaromeo.com','Aston Martin':'astonmartin.com','Audi':'audi.com','Avatr':'avatr.com','Bajaj':'bajajauto.com','Bentley':'bentleymotors.com','BMW':'bmw.com','BYD':'byd.com','Buick':'buick.com','Cadillac':'cadillac.com','Chery':'cheryinternational.com','Chevrolet':'chevrolet.com','Chrysler':'chrysler.com','Deepal':'deepal.com','Denza':'denza.com','Dodge':'dodge.com','Ferrari':'ferrari.com','Ford':'ford.com','GAC':'gac-motor.com','GMC':'gmc.com','GPX':'gpxmotor.com','Geely':'geely.com','Genesis':'genesis.com','Honda':'honda.com','Hongqi':'hongqi-auto.com','Hyundai':'hyundai.com','INEOS':'ineosgrenadier.com','Infiniti':'infiniti.com','Isuzu':'isuzu.com','Jaecoo':'jaecoo.com','Jaguar':'jaguar.com','Jeep':'jeep.com','Kawasaki':'global.kawasaki.com','Keeway':'keeway.com','Kia':'kia.com','Land Rover':'landrover.com','Leapmotor':'leapmotor.com','Lexus':'lexus.com','Li':'lixiang.com','Lincoln':'lincoln.com','MG':'mgmotor.com','Mazda':'mazda.com','Mercedes-Benz':'mercedes-benz.com','Mini':'mini.com','Mitsubishi':'mitsubishi-motors.com','Neta':'netaauto.com','Nissan':'nissan-global.com','Porsche':'porsche.com','RAM':'ramtrucks.com','Rolls-Royce':'rolls-roycemotorcars.com','Subaru':'subaru.com','Suzuki':'suzuki.com','Tesla':'tesla.com','Toyota':'toyota.com','Vespa':'vespa.com','VinFast':'vinfastauto.com','Voltra':'voltramotor.com','Volkswagen':'volkswagen.com','Volvo':'volvocars.com','Wuling':'wuling.com.cn','XPeng':'xpeng.com','Xiaomi':'xiaomi.com','Yadea':'yadea.com','Yamaha':'yamaha-motor.com','Zeekr':'zeekr.com','Zontes':'zontes.com'}
+const brandLogoSlugs={'Acura':'acura','Alfa Romeo':'alfaromeo','Aston Martin':'astonmartin','Audi':'audi','Bajaj':'bajaj','Bentley':'bentley','BMW':'bmw','Buick':'buick','Cadillac':'cadillac','Chevrolet':'chevrolet','Chrysler':'chrysler','Dodge':'dodge','Ferrari':'ferrari','Ford':'ford','GMC':'gmc','GPX':'gpx','Honda':'honda','Hyundai':'hyundai','Infiniti':'infiniti','Jaguar':'jaguar','Jeep':'jeep','Kawasaki':'kawasaki','Keeway':'keeway','Kia':'kia','Land Rover':'landrover','Lexus':'lexus','Lincoln':'lincoln','Mazda':'mazda','Mercedes-Benz':'mercedesbenz','Mini':'mini','Mitsubishi':'mitsubishi','Nissan':'nissan','Porsche':'porsche','RAM':'ram','Rolls-Royce':'rollsroyce','Subaru':'subaru','Suzuki':'suzuki','Tesla':'tesla','Toyota':'toyota','Vespa':'vespa','Volkswagen':'volkswagen','Volvo':'volvo','Voltra':'voltra','Yadea':'yadea','Yamaha':'yamaha','Zontes':'zontes'}
+const brandLogoUrls={
+  Bajaj:'https://upload.wikimedia.org/wikipedia/commons/d/d0/Bajaj_auto_logo.svg',
+  Cadillac:'https://upload.wikimedia.org/wikipedia/commons/d/d0/Cadillac_Logo_1999.svg',
+  Chery:'https://upload.wikimedia.org/wikipedia/commons/b/b6/Chery_logo.svg',
+  Chrysler:'https://pictures.dealer.com/a/allamericancllc/1234/489e8d9bbec442858f4c76066891657b.png',
+  Deepal:'https://upload.wikimedia.org/wikipedia/commons/c/c0/Deepal_global_logo.svg',
+  Genesis:'https://upload.wikimedia.org/wikipedia/commons/2/29/Genesis_White_Transparent_Logo.png',
+  GPX:'https://images.seeklogo.com/logo-png/44/1/gpx-logo-png_seeklogo-449982.png',
+  Hongqi:'https://e-n-cars.ru/images/brands/hongqi_dark_694bf9a8cf49d.webp',
+  Isuzu:'https://upload.wikimedia.org/wikipedia/commons/4/49/Isuzu.svg',
+  Jaecoo:'https://upload.wikimedia.org/wikipedia/commons/4/4b/Jaecoo_wordmark.svg',
+  Lincoln:'https://www.autobestkorea.com/upload/brand/2025/lincoln_motor_logomark-brandlogo.net_-512x512_1766010644_555.png',
+  Voltra:'https://phnompenh.impacthub.net/wp-content/uploads/2024/05/Voltra.png',
+  Wuling:'https://upload.wikimedia.org/wikipedia/commons/7/77/Wuling_logo.svg',
+  Zontes:'https://motoa2.es/wp-content/uploads/logo-zontes-moto-a2.png'
+}
+const brandLogoUrl=brand=>{
+  const slug=brandLogoSlugs[brand]||brand.toLowerCase().replace(/[^a-z0-9]/g,'')
+  return `https://cdn.simpleicons.org/${slug}`
+}
 const kmLine=(a,b)=>haversine(a,b)
 const stationFilters=[['all','All Stations'],['ev','EV Chargers'],['gas','Gas Pumps'],['hybrid','Hybrid Hubs']]
 const filterLabel=id=>stationFilters.find(f=>f[0]===id)?.[1]||'Stations'
 const searchLabel={all:'Find stations along this route',ev:'Find EV chargers along this route',gas:'Find gas stations along this route',hybrid:'Find hybrid hubs along this route'}
 const matchesFilter=(s,f)=>f==='all'||(f==='ev'&&s.type!=='gas_only')||(f==='gas'&&s.type!=='ev_only')||(f==='hybrid'&&s.type==='hybrid_hub')
 const typeBadge={ev_only:['EV','text-blue-300'],gas_only:['Gas','text-amberx'],hybrid_hub:['Hybrid hub','text-violet-300']}
-function BrandLockup({subtitle='Cambodia trip planner',className=''}){return <div className={cx('brand-lockup',className)}><img src="/favicon.svg" alt=""/><div><div className="brand-name">SmartRoute <span>AI</span></div><div className="brand-subtitle">{subtitle}</div></div></div>}
-function ThemeToggle({theme,onToggle}){const isDark=theme==='dark';return <button type="button" onClick={onToggle} className="theme-toggle" aria-label={isDark?'Switch to light mode':'Switch to dark mode'} aria-pressed={isDark} title={isDark?'Switch to light mode':'Switch to dark mode'}>{isDark?<Sun size={17}/>:<Moon size={17}/>}<span>{isDark?'Light mode':'Dark mode'}</span></button>}
-function PageHeader({subtitle,theme,onToggleTheme,onBack,className=''}){return <header className={cx('page-header',className)}>{onBack&&<button type="button" onClick={onBack} className="page-back"><ArrowLeft size={16}/>Back</button>}<BrandLockup subtitle={subtitle}/><ThemeToggle theme={theme} onToggle={onToggleTheme}/></header>}
-function Panel({children,className=''}){return <div className={cx('panel-surface rounded-2xl border border-white/10 shadow-xl',className)}>{children}</div>}
+function Panel({children,className=''}){return <div className={cx('glass rounded-2xl border border-white/10 shadow-2xl',className)}>{children}</div>}
 function Pill({children,active,onClick}){return <button onClick={onClick} className={cx('rounded-full px-3 py-2 text-xs font-semibold transition',active?'bg-emeraldx text-ink':'bg-white/5 text-slate-300 hover:bg-white/10')}>{children}</button>}
 function Field({label,children}){return <label className="block space-y-2"><span className="text-xs font-semibold uppercase tracking-wider text-slate-400">{label}</span>{children}</label>}
 function Select({value,onChange,children}){return <div className="relative"><select value={value} onChange={e=>onChange(e.target.value)} className="field w-full appearance-none pr-9">{children}</select><ChevronDown size={16} className="pointer-events-none absolute right-3 top-3.5 text-slate-400"/></div>}
@@ -210,26 +231,26 @@ const repo='https://github.com/OengDida/SmartRoute-AI'
 function FooterCol({title,children}){return <div><div className="mb-2 text-sm font-bold text-white">{title}</div><ul className="space-y-0.5">{children}</ul></div>}
 function FLink({href,onClick,external,children}){return <li><a href={href} onClick={onClick?e=>{e.preventDefault();onClick()}:undefined} {...(external?{target:'_blank',rel:'noopener noreferrer'}:{})} className="text-sm leading-6 text-slate-400 transition hover:text-emeraldx">{children}</a></li>}
 function FText({children}){return <li className="text-sm leading-6 text-slate-500">{children}</li>}
-function Welcome({onStart,onRoute,theme,onToggleTheme}){return <main className="welcome min-h-screen overflow-hidden px-5 text-white">
+function Welcome({onStart,onRoute}){return <main className="welcome min-h-screen overflow-hidden px-5 text-white">
   <div className="absolute inset-0 bg-grid opacity-30"/>
   <div className="relative mx-auto flex min-h-screen max-w-6xl flex-col">
-    <PageHeader subtitle="Cambodia mobility planning" theme={theme} onToggleTheme={onToggleTheme} className="welcome-header py-7"/>
+    <header className="flex items-center gap-3 py-7"><img src="/favicon.svg" alt="SmartRoute AI logo" className="h-11 w-11 object-contain [filter:drop-shadow(0_0_12px_rgba(32,214,154,0.35))]"/><div><div className="text-xl font-black tracking-tight">SmartRoute <span className="text-emeraldx">AI</span></div><div className="text-[10px] uppercase tracking-[.24em] text-slate-500">Cambodia mobility intelligence</div></div></header>
     <section className="grid flex-1 items-center gap-12 py-12 lg:grid-cols-[1.05fr_.95fr]">
-      <div className="max-w-2xl"><div className="mb-6 inline-flex items-center gap-2 rounded-full border border-emeraldx/25 bg-emeraldx/10 px-4 py-2 text-xs font-semibold text-emeraldx"><Sparkles size={14}/> Cambodia trip planning</div>
-        <h1 className="text-5xl font-black leading-[1.06] tracking-tight sm:text-7xl">Plan the route.<br/><span className="text-emeraldx">Check the range.</span></h1>
-        <p className="mt-7 max-w-xl text-lg leading-8 text-slate-300">Set your vehicle and destination to check a Google driving route, estimated range and trip cost, then find fuel or charging stops along the way.</p>
-        <div className="mt-9 flex flex-wrap gap-3"><button onClick={onStart} className="flex items-center gap-3 rounded-xl bg-emeraldx px-6 py-4 font-extrabold text-ink shadow-glow transition hover:-translate-y-0.5 hover:bg-emerald-300">Start a trip <ArrowRight size={18}/></button><div className="flex items-center gap-2 rounded-xl border border-white/10 px-4 py-3 text-sm text-slate-400"><ShieldAlert size={16} className="text-amberx"/> Verify stop availability before departure.</div></div>
+      <div className="max-w-2xl"><div className="mb-6 inline-flex items-center gap-2 rounded-full border border-emeraldx/25 bg-emeraldx/10 px-4 py-2 text-xs font-semibold text-emeraldx"><Sparkles size={14}/> Built for Cambodia's highways</div>
+        <h1 className="text-5xl font-black leading-[1.06] tracking-tight sm:text-7xl">Every kilometer.<br/><span className="text-emeraldx">Smarter.</span></h1>
+        <p className="mt-7 max-w-xl text-lg leading-8 text-slate-300">AI-Powered Multi-Fuel Highway & Range Planner for Cambodia. Prevent dead-zones, find EV chargers & gas pumps, and optimize trip costs in KHR & USD.</p>
+        <div className="mt-9 flex flex-wrap gap-3"><button onClick={onStart} className="flex items-center gap-3 rounded-xl bg-emeraldx px-6 py-4 font-extrabold text-ink shadow-glow transition hover:-translate-y-0.5 hover:bg-emerald-300">Launch SmartRoute AI <ArrowRight size={18}/></button><div className="flex items-center gap-2 rounded-xl border border-white/10 px-4 py-3 text-sm text-slate-400"><ShieldAlert size={16} className="text-amberx"/> Plan ahead. Arrive prepared.</div></div>
         <div className="mt-12 grid max-w-lg grid-cols-3 gap-4 border-t border-white/10 pt-6"><div><div className="text-2xl font-black">25+</div><div className="text-xs text-slate-500">Station pins</div></div><div><div className="text-2xl font-black">5</div><div className="text-xs text-slate-500">Powertrains</div></div><div><div className="text-2xl font-black">៛ / $</div><div className="text-xs text-slate-500">Dual currency</div></div></div>
       </div>
       <div className="relative hidden lg:block"><div className="absolute -inset-10 rounded-full bg-emeraldx/10 blur-3xl"/><div className="relative rounded-[2rem] border border-white/10 bg-slate-900/70 p-5 shadow-2xl">
-        <div className="mb-4 flex items-center justify-between"><span className="text-sm font-bold">Route preview</span><span className="rounded-full bg-emeraldx/10 px-3 py-1 text-[10px] font-bold text-emeraldx">CAMBODIA</span></div>
-        <div className="map-art relative h-[390px] overflow-hidden rounded-2xl border border-white/10"><svg viewBox="0 0 500 390" className="h-full w-full"><path d="M40 70 C130 120 110 170 180 195 S260 235 270 315 S370 340 440 280" fill="none" stroke="#1B4332" strokeWidth="5" strokeDasharray="2 10" strokeLinecap="round"/><path d="M15 290 C120 245 160 280 220 210 S350 120 480 145" fill="none" stroke="#334d46" strokeWidth="2"/><path d="M60 40 L440 350 M30 200 L470 60 M120 0 L390 390" stroke="#203a32" strokeWidth="1"/><circle cx="40" cy="70" r="10" fill="#1B4332"/><circle cx="440" cy="280" r="10" fill="#A66A16"/><circle cx="260" cy="230" r="7" fill="#2D6A4F"/><circle cx="270" cy="315" r="7" fill="#87A995"/></svg><div className="absolute left-5 top-5 rounded-xl border border-white/10 bg-ink/80 px-3 py-2 text-xs"><div className="font-bold">Phnom Penh</div><div className="text-slate-400">Origin</div></div><div className="absolute bottom-5 right-5 rounded-xl border border-white/10 bg-ink/80 px-3 py-2 text-xs"><div className="font-bold">Siem Reap</div><div className="text-slate-400">Destination</div></div><div className="absolute bottom-5 left-5 rounded-xl bg-blue-400/15 px-3 py-2 text-xs text-blue-200">⚡ Charging stop</div></div>
+        <div className="mb-4 flex items-center justify-between"><span className="text-sm font-bold">Live route preview</span><span className="rounded-full bg-emeraldx/10 px-3 py-1 text-[10px] font-bold text-emeraldx">CAMBODIA</span></div>
+        <div className="map-art relative h-[390px] overflow-hidden rounded-2xl border border-white/10"><svg viewBox="0 0 500 390" className="h-full w-full"><path d="M40 70 C130 120 110 170 180 195 S260 235 270 315 S370 340 440 280" fill="none" stroke="#20d69a" strokeWidth="5" strokeDasharray="2 10" strokeLinecap="round"/><path d="M15 290 C120 245 160 280 220 210 S350 120 480 145" fill="none" stroke="#334d46" strokeWidth="2"/><path d="M60 40 L440 350 M30 200 L470 60 M120 0 L390 390" stroke="#203a32" strokeWidth="1"/><circle cx="40" cy="70" r="10" fill="#20d69a"/><circle cx="440" cy="280" r="10" fill="#f7b84b"/><circle cx="260" cy="230" r="7" fill="#53b7ff"/><circle cx="270" cy="315" r="7" fill="#b69cff"/></svg><div className="absolute left-5 top-5 rounded-xl border border-white/10 bg-ink/80 px-3 py-2 text-xs"><div className="font-bold">Phnom Penh</div><div className="text-slate-400">Origin</div></div><div className="absolute bottom-5 right-5 rounded-xl border border-white/10 bg-ink/80 px-3 py-2 text-xs"><div className="font-bold">Siem Reap</div><div className="text-slate-400">Destination</div></div><div className="absolute bottom-5 left-5 rounded-xl bg-blue-400/15 px-3 py-2 text-xs text-blue-200">⚡ Charging stop</div></div>
         <div className="mt-4 grid grid-cols-3 gap-2 text-center"><div className="rounded-xl bg-white/5 p-3"><Route size={16} className="mx-auto mb-2 text-emeraldx"/><b className="text-sm">Route</b><p className="text-[10px] text-slate-500">Google Routes</p></div><div className="rounded-xl bg-white/5 p-3"><BatteryCharging size={16} className="mx-auto mb-2 text-blue-300"/><b className="text-sm">Range</b><p className="text-[10px] text-slate-500">Dead-zone alerts</p></div><div className="rounded-xl bg-white/5 p-3"><CircleDollarSign size={16} className="mx-auto mb-2 text-amberx"/><b className="text-sm">Cost</b><p className="text-[10px] text-slate-500">KHR + USD</p></div></div>
       </div></div>
     </section>
     <footer className="border-t border-white/10 pt-12">
       <div className="grid gap-10 lg:grid-cols-[minmax(0,1fr)_minmax(0,2fr)]">
-        <div><div className="flex items-center gap-3"><img src="/favicon.svg" alt="SmartRoute AI logo" className="h-9 w-9 object-contain"/><div className="text-lg font-black tracking-tight">SmartRoute <span className="text-emeraldx">AI</span></div></div><p className="mt-4 max-w-xs text-sm leading-6 text-slate-500">Trip range and cost planning for Cambodia.</p><div className="mt-6 flex gap-3"><a href={repo} target="_blank" rel="noopener noreferrer" aria-label="SmartRoute AI on GitHub" className="grid h-10 w-10 place-items-center rounded-full border border-white/10 text-slate-400 transition hover:border-emeraldx/50 hover:text-emeraldx"><Github size={18}/></a></div></div>
+        <div><div className="flex items-center gap-3"><img src="/favicon.svg" alt="SmartRoute AI logo" className="h-9 w-9 object-contain"/><div className="text-lg font-black tracking-tight">SmartRoute <span className="text-emeraldx">AI</span></div></div><p className="mt-4 max-w-xs text-sm leading-6 text-slate-500">Highway range and trip-cost planning for Cambodia. Plan ahead. Arrive prepared.</p><div className="mt-6 flex gap-3"><a href={repo} target="_blank" rel="noopener noreferrer" aria-label="SmartRoute AI on GitHub" className="grid h-10 w-10 place-items-center rounded-full border border-white/10 text-slate-400 transition hover:border-emeraldx/50 hover:text-emeraldx"><Github size={18}/></a></div></div>
         <div className="grid grid-cols-2 gap-x-8 gap-y-10 sm:grid-cols-4">
           <FooterCol title="Planner"><FLink href="/vehicle" onClick={onStart}>Launch SmartRoute AI</FLink><FLink href="/vehicle" onClick={onStart}>Vehicle profile</FLink><FLink href="/route" onClick={onRoute}>Map &amp; route</FLink></FooterCol>
           <FooterCol title="Powertrains"><FText>Electric</FText><FText>Hybrid</FText><FText>Gasoline</FText><FText>Diesel</FText><FText>Motorbike</FText></FooterCol>
@@ -241,7 +262,7 @@ function Welcome({onStart,onRoute,theme,onToggleTheme}){return <main className="
     </footer>
   </div>
 </main>}
-function LocationGate({onSuccess,onBack,theme,onToggleTheme}) {
+function LocationGate({onSuccess,onBack}) {
   const [loading,setLoading]=useState(false)
   const [error,setError]=useState('')
   const requestRef=useRef(null)
@@ -305,7 +326,10 @@ function LocationGate({onSuccess,onBack,theme,onToggleTheme}) {
 
   return <main className="welcome relative grid min-h-[100dvh] place-items-center overflow-hidden px-5 py-8 text-white">
     <div className="pointer-events-none absolute inset-0 bg-grid opacity-30"/>
-    <PageHeader subtitle="Cambodia trip planner" theme={theme} onToggleTheme={onToggleTheme} className="location-header absolute left-5 right-5 top-5 z-10 mx-auto max-w-6xl sm:left-8 sm:right-8"/>
+    <header className="absolute left-5 right-5 top-5 z-10 mx-auto flex max-w-6xl items-center gap-3 sm:left-8 sm:right-8">
+      <img src="/favicon.svg" alt="" className="h-10 w-10 object-contain [filter:drop-shadow(0_0_12px_rgba(32,214,154,0.35))]"/>
+      <div><div className="text-lg font-black tracking-tight">SmartRoute <span className="text-emeraldx">AI</span></div><div className="text-[9px] uppercase tracking-[.22em] text-slate-500">Cambodia trip planner</div></div>
+    </header>
     <section className="relative w-full max-w-lg pt-14">
       <Panel className="p-6 text-center shadow-2xl sm:p-9">
         <div className="mx-auto grid h-14 w-14 place-items-center rounded-2xl border border-emeraldx/20 bg-emeraldx/10 text-emeraldx shadow-glow"><MapPin size={25}/></div>
@@ -325,26 +349,32 @@ function LocationGate({onSuccess,onBack,theme,onToggleTheme}) {
         <button onClick={onBack} className="mt-5 inline-flex items-center gap-2 rounded-lg px-3 py-2 text-xs font-semibold text-slate-400 transition hover:text-white"><ArrowLeft size={14}/>Back to SmartRoute</button>
         <p className="mt-4 text-[10px] leading-4 text-slate-500">Location is used to show your position on the trip map. You can change browser permissions any time.</p>
       </Panel>
-      <div className="mt-5 text-center text-[10px] text-slate-500">Verify stop availability before departure.</div>
+      <div className="mt-5 text-center text-[10px] text-slate-500">Plan ahead. Arrive prepared.</div>
     </section>
   </main>
 }
-function Setup({onBack,onGenerate,config,setConfig,theme,onToggleTheme}) {
+function Setup({onBack,onGenerate,config,setConfig}) {
   const [vehicleSearch,setVehicleSearch]=useState('')
+  const [selectedBrand,setSelectedBrand]=useState('')
+  const [showAllBrands,setShowAllBrands]=useState(false)
   const group=vehicleGroups.find(g=>g.id===config.category)
-  const vehicleOptions=group?.items.filter(v=>`${v.name} ${v.note}`.toLowerCase().includes(vehicleSearch.trim().toLowerCase()))||[]
+  const brands=[...new Set(group?.items.map(v=>vehicleBrand(v.name))||[])].sort((a,b)=>a.localeCompare(b))
+  const mobileBrands=showAllBrands?brands:brands.slice(0,8)
+  const desktopBrands=showAllBrands?brands:brands.slice(0,12)
+  const renderBrand=brand=><button type="button" key={brand} onClick={()=>setSelectedBrand(current=>current===brand?'':brand)} aria-pressed={selectedBrand===brand} className="group flex min-w-0 flex-col items-center gap-2 rounded-lg p-1 text-center"><span className={cx('relative flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-full border border-white/10 text-sm font-black',brand==='Genesis'?'bg-slate-900 text-white':'bg-slate-100 text-slate-800')}><span>{brand.split(/\s+/).map(part=>part[0]).join('').slice(0,3)}</span>{brandLogoDomains[brand]&&<img src={brandLogoUrls[brand]||brandLogoUrl(brand)} alt={`${brand} logo`} loading="lazy" onLoad={event=>{event.currentTarget.previousElementSibling.style.display='none'}} onError={event=>{const img=event.currentTarget;if(!img.dataset.fallback&&!brandLogoUrls[brand]){img.dataset.fallback='true';img.src=`https://www.google.com/s2/favicons?domain=${brandLogoDomains[brand]}&sz=256`}else img.style.display='none'}} className="absolute inset-0 m-auto h-9 w-9 object-contain"/>}</span><span className={cx('w-full whitespace-normal break-words text-[11px] leading-tight',selectedBrand===brand?'text-emeraldx':'text-slate-300')}>{brand}</span></button>
+  const vehicleOptions=group?.items.filter(v=>(!selectedBrand||vehicleBrand(v.name)===selectedBrand)&&`${v.name} ${v.note}`.toLowerCase().includes(vehicleSearch.trim().toLowerCase()))||[]
   const selected=group?.items.find(v=>v.id===config.model)
   const set=(key,value)=>setConfig(p=>({...p,[key]:value}))
   useEffect(()=>{if(!config.modified&&selected)setConfig(p=>({...p,energy:selected.energy,capacity:selected.capacity,consumption:selected.consumption,model:selected.id}))},[config.category,config.model,config.modified])
   const Icon=categoryIcons[config.category]||CarFront
   return <div className="min-h-screen bg-ink px-4 py-6 text-white sm:px-8"><div className="mx-auto max-w-5xl">
-    <PageHeader subtitle="Vehicle profile" theme={theme} onToggleTheme={onToggleTheme} onBack={onBack} className="setup-header mb-7"/>
+    <button onClick={onBack} className="mb-7 flex items-center gap-2 text-sm text-slate-400 hover:text-white"><ArrowLeft size={16}/> Back</button>
     <div className="mb-8"><div className="text-xs font-bold uppercase tracking-[.2em] text-emeraldx">Step 02 / Vehicle profile</div><h1 className="mt-2 text-3xl font-black sm:text-4xl">What are you driving?</h1><p className="mt-2 text-slate-400">We'll use your vehicle's real-world efficiency to estimate range and trip costs.</p></div>
     <div className="grid gap-6 lg:grid-cols-[1.2fr_.8fr]">
-      <Panel className="p-5 sm:p-7"><h2 className="mb-4 font-bold">2A. Select powertrain</h2><div className="grid grid-cols-2 gap-3 sm:grid-cols-3">{vehicleGroups.map(g=>{const I=categoryIcons[g.id];return <button key={g.id} onClick={()=>setConfig(p=>({...p,category:g.id,model:'',energy:g.items[0].energy,...(p.modified?{}:{capacity:'',consumption:''})}))} className={cx('rounded-xl border p-4 text-left transition',config.category===g.id?'border-emeraldx bg-emeraldx/10 shadow-glow':'border-white/10 bg-white/[.025] hover:bg-white/5')}><I size={22} className={config.category===g.id?'text-emeraldx':'text-slate-400'}/><div className="mt-3 text-sm font-bold">{g.label}</div><div className="mt-1 text-[11px] text-slate-500">{g.items.length} presets</div></button>})}</div>
+      <Panel className="p-5 sm:p-7"><h2 className="mb-4 font-bold">2A. Select powertrain</h2><div className="grid grid-cols-2 gap-3 sm:grid-cols-3">{vehicleGroups.map(g=>{const I=categoryIcons[g.id];return <button key={g.id} onClick={()=>{setSelectedBrand('');setShowAllBrands(false);setConfig(p=>({...p,category:g.id,model:'',energy:g.items[0].energy,...(p.modified?{}:{capacity:'',consumption:''})}))}} className={cx('rounded-xl border p-4 text-left transition',config.category===g.id?'border-emeraldx bg-emeraldx/10 shadow-glow':'border-white/10 bg-white/[.025] hover:bg-white/5')}><I size={22} className={config.category===g.id?'text-emeraldx':'text-slate-400'}/><div className="mt-3 text-sm font-bold">{g.label}</div><div className="mt-1 text-[11px] text-slate-500">{g.items.length} presets</div></button>})}</div>
       <div className="my-7 border-t border-white/10"/>
       <div className="flex flex-wrap items-center justify-between gap-3"><h2 className="font-bold">2B. Vehicle configuration</h2><div className="flex rounded-xl bg-black/20 p-1"><button onClick={()=>setConfig(p=>({...p,modified:false,...(p.model?{}:{capacity:'',consumption:''})}))} className={cx('rounded-lg px-4 py-2 text-xs font-bold',!config.modified?'bg-emeraldx text-ink':'text-slate-400')}>Stock</button><button onClick={()=>set('modified',true)} className={cx('rounded-lg px-4 py-2 text-xs font-bold',config.modified?'bg-emeraldx text-ink':'text-slate-400')}>Modified</button></div></div>
-      {!config.modified?<div className="mt-5 space-y-4">{!group?<p className="rounded-xl border border-white/10 bg-black/20 p-4 text-xs leading-5 text-slate-400">Select a powertrain above, then choose your vehicle.</p>:<><Field label="Search vehicles"><div className="relative"><Search size={15} className="pointer-events-none absolute left-3 top-3.5 text-slate-400"/><input className="field w-full !pl-9" type="search" value={vehicleSearch} onChange={e=>setVehicleSearch(e.target.value)} placeholder="Search by make or model" autoComplete="off"/></div></Field><div className="-mt-2 max-h-56 overflow-y-auto rounded-xl border border-white/10 bg-black/30 p-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">{vehicleOptions.length?vehicleOptions.map(v=><button type="button" key={v.id} onClick={()=>setConfig(p=>({...p,model:v.id,energy:v.energy,capacity:v.capacity,consumption:v.consumption}))} className={cx('block w-full rounded-lg px-3 py-2 text-left transition hover:bg-white/5',config.model===v.id&&'bg-emeraldx/10')}><span className="block text-xs font-semibold">{v.name}</span><span className="mt-0.5 block text-[10px] text-slate-500">{v.note}</span></button>):<div className="px-3 py-3 text-xs text-slate-500">No vehicles match “{vehicleSearch}”. Try another search.</div>}</div></>}{selected&&<div className="rounded-xl border border-emeraldx/15 bg-emeraldx/5 p-4"><div className="flex items-center gap-2 text-sm font-bold text-emeraldx"><Icon size={17}/>{selected?.name}</div><div className="mt-3 grid grid-cols-2 gap-3"><div><div className="text-[10px] uppercase text-slate-500">Capacity</div><b>{config.capacity} {config.energy==='electric'?'kWh':'L'}</b></div><div><div className="text-[10px] uppercase text-slate-500">Consumption</div><b>{config.consumption} {config.energy==='electric'?'kWh':'L'}/100km</b></div></div></div>}</div>
+      {!config.modified?<div className="mt-5 space-y-4">{!group?<p className="rounded-xl border border-white/10 bg-black/20 p-4 text-xs leading-5 text-slate-400">Select a powertrain above, then choose your vehicle.</p>:<><div className="rounded-xl border border-white/10 bg-black/20 p-4"><div className="mb-4 text-sm font-bold">Brand</div><div className="grid grid-cols-4 gap-x-2 gap-y-4 sm:hidden">{mobileBrands.map(renderBrand)}</div><div className="hidden grid-cols-6 gap-x-2 gap-y-4 sm:grid">{desktopBrands.map(renderBrand)}</div>{brands.length>8&&<button type="button" onClick={()=>setShowAllBrands(value=>!value)} className="mt-4 w-full rounded-lg bg-white/[.08] py-3 text-sm font-semibold text-slate-400 transition hover:bg-white/10 hover:text-white sm:hidden">{showAllBrands?'Show Less':'View More'}</button>}{brands.length>12&&<button type="button" onClick={()=>setShowAllBrands(value=>!value)} className="mt-4 hidden w-full rounded-lg bg-white/[.08] py-3 text-sm font-semibold text-slate-400 transition hover:bg-white/10 hover:text-white sm:block">{showAllBrands?'Show Less':'View More'}</button>}</div><Field label="Search vehicles"><div className="relative"><Search size={15} className="pointer-events-none absolute left-3 top-3.5 text-slate-400"/><input className="field w-full !pl-9" type="search" value={vehicleSearch} onChange={e=>setVehicleSearch(e.target.value)} placeholder="Search by make or model" autoComplete="off"/></div></Field><div className="-mt-2 max-h-56 overflow-y-auto rounded-xl border border-white/10 bg-black/30 p-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">{vehicleOptions.length?vehicleOptions.map(v=><button type="button" key={v.id} onClick={()=>setConfig(p=>({...p,model:v.id,energy:v.energy,capacity:v.capacity,consumption:v.consumption}))} className={cx('block w-full rounded-lg px-3 py-2 text-left transition hover:bg-white/5',config.model===v.id&&'bg-emeraldx/10')}><span className="block text-xs font-semibold">{v.name}</span><span className="mt-0.5 block text-[10px] text-slate-500">{v.note}</span></button>):<div className="px-3 py-3 text-xs text-slate-500">No vehicles match “{vehicleSearch}”. Try another search.</div>}</div></>}{selected&&<div className="rounded-xl border border-emeraldx/15 bg-emeraldx/5 p-4"><div className="flex items-center gap-2 text-sm font-bold text-emeraldx"><Icon size={17}/>{selected?.name}</div><div className="mt-3 grid grid-cols-2 gap-3"><div><div className="text-[10px] uppercase text-slate-500">Capacity</div><b>{config.capacity} {config.energy==='electric'?'kWh':'L'}</b></div><div><div className="text-[10px] uppercase text-slate-500">Consumption</div><b>{config.consumption} {config.energy==='electric'?'kWh':'L'}/100km</b></div></div></div>}</div>
       :<div className="mt-5 grid gap-4 sm:grid-cols-2"><Field label="Fuel / energy type"><Select value={config.energy} onChange={v=>set('energy',v)}><option value="" disabled>Choose type</option><option value="gasoline">Regular gasoline 92</option><option value="diesel">Diesel</option><option value="electric">Electric (kWh)</option></Select></Field><Field label={`Consumption (${config.energy==='electric'?'kWh':'L'}/100km)`}><input className="field w-full" type="number" min="0.1" step=".1" value={config.consumption} onChange={e=>set('consumption',e.target.value===''?'':Number(e.target.value))}/></Field><Field label={`Tank / battery capacity (${config.energy==='electric'?'kWh':'L'})`}><input className="field w-full" type="number" min="1" step=".1" value={config.capacity} onChange={e=>set('capacity',e.target.value===''?'':Number(e.target.value))}/></Field><Field label="Custom vehicle name"><input className="field w-full" value={config.customName} onChange={e=>set('customName',e.target.value)} placeholder="e.g. My modified pickup"/></Field></div>}
       <div className="mt-7 rounded-xl bg-black/20 p-4"><div className="flex items-center justify-between"><label className="text-sm font-bold">Current {config.energy==='electric'?'battery':config.energy?'fuel':'battery / fuel'} level</label><span className="text-xl font-black text-emeraldx">{config.level}%</span></div><input type="range" min="5" max="100" step="1" value={config.level} onChange={e=>set('level',Number(e.target.value))} className="mt-4 w-full accent-emerald-400"/><div className="mt-1 flex justify-between text-[10px] text-slate-500"><span>Nearly empty</span><span>Full tank</span></div></div>
       <button onClick={onGenerate} disabled={!config.capacity||!config.consumption||config.capacity<=0||config.consumption<=0||(!config.modified&&!config.model)||(config.modified&&!config.energy)} className="mt-6 flex w-full items-center justify-center gap-2 rounded-xl bg-emeraldx py-4 font-extrabold text-ink transition hover:bg-emerald-300 disabled:opacity-40">Generate Map & Route <ArrowRight size={18}/></button>
@@ -354,18 +384,18 @@ function Setup({onBack,onGenerate,config,setConfig,theme,onToggleTheme}) {
 }
 const loadTripSnapshot=()=>{
   try{
-    const saved=JSON.parse(localStorage.getItem('smartroute-trip')||'null')
-    if(!saved||!Array.isArray(saved.route))return null
+    const saved=JSON.parse(sessionStorage.getItem('smartroute-trip')||'null')
+    if(!saved)return null
     const validPoint=p=>p&&Number.isFinite(p.lat)&&Number.isFinite(p.lng)
     return {
       ...saved,
       origin:validPoint(saved.origin)?saved.origin:null,
       destination:validPoint(saved.destination)?saved.destination:null,
-      route:saved.route.filter(p=>Array.isArray(p)&&Number.isFinite(p[0])&&Number.isFinite(p[1])),
+      route:Array.isArray(saved.route)?saved.route.filter(p=>Array.isArray(p)&&Number.isFinite(p[0])&&Number.isFinite(p[1])):[],
     }
   }catch{return null}
 }
-function TripPlanner({config,onChangeVehicle,initialLocation,theme,onToggleTheme}) {
+function TripPlanner({config,onChangeVehicle,initialLocation}) {
   const [savedTrip]=useState(loadTripSnapshot)
   const [originName,setOriginName]=useState(()=>savedTrip?.originName||(initialLocation?'Current location':''))
   const [destinationName,setDestinationName]=useState(()=>savedTrip?.destinationName||'')
@@ -473,12 +503,12 @@ function TripPlanner({config,onChangeVehicle,initialLocation,theme,onToggleTheme
   useEffect(()=>{
     try{
       const saved={origin,destination,originName,destinationName,route,distance,duration}
-      if(route.length>1||!localStorage.getItem('smartroute-trip'))localStorage.setItem('smartroute-trip',JSON.stringify(saved))
+      if(route.length>1||!sessionStorage.getItem('smartroute-trip'))sessionStorage.setItem('smartroute-trip',JSON.stringify(saved))
       else {
-        const previous=JSON.parse(localStorage.getItem('smartroute-trip')||'null')
+        const previous=JSON.parse(sessionStorage.getItem('smartroute-trip')||'null')
         const samePoint=(a,b)=>a&&b&&a.lat===b.lat&&a.lng===b.lng
         const sameTrip=samePoint(previous?.origin,origin)&&samePoint(previous?.destination,destination)
-        localStorage.setItem('smartroute-trip',JSON.stringify({...saved,route:sameTrip?previous?.route||[]:[],distance:sameTrip?previous?.distance||0:0,duration:sameTrip?previous?.duration||0:0}))
+        sessionStorage.setItem('smartroute-trip',JSON.stringify({...saved,route:sameTrip?previous?.route||[]:[],distance:sameTrip?previous?.distance||0:0,duration:sameTrip?previous?.duration||0:0}))
       }
     }catch{}
   },[origin,destination,originName,destinationName,route,distance,duration])
@@ -561,7 +591,7 @@ function TripPlanner({config,onChangeVehicle,initialLocation,theme,onToggleTheme
   return <div className="relative h-[100dvh] min-h-[480px] w-full overflow-hidden bg-slate-950 text-white lg:min-h-[720px]">
     <div className={cx('absolute inset-0',mapClickMode&&'pick-mode')}><MapView origin={origin} destination={destination} route={routePoints} stations={googleStations??[]} filter={filter} onMapClick={handleMapClick} rangePoint={rangePoint} initialLocation={initialLocation}/></div>
     <div className="pointer-events-none absolute inset-0 z-[400] bg-gradient-to-r from-ink/35 via-transparent to-transparent"/>
-    <div className="pointer-events-none absolute left-1 top-4 z-[500] flex items-center gap-2"><button onClick={onChangeVehicle} aria-label="Back to vehicle profile" className="pointer-events-auto flex h-[52px] items-center gap-2 rounded-xl border border-white/10 bg-ink/90 px-3 text-xs font-bold shadow-xl backdrop-blur transition hover:border-emeraldx/50 hover:text-emeraldx"><ArrowLeft size={16}/> Back</button><div className="flex items-center gap-2 rounded-xl border border-white/10 bg-ink/90 px-3 py-2 shadow-xl backdrop-blur"><img src="/favicon.svg" alt="SmartRoute AI logo" className="h-8 w-8 object-contain"/><div className="hidden sm:block"><div className="text-sm font-black">SmartRoute <span className="text-emeraldx">AI</span></div><div className="text-[9px] uppercase tracking-widest text-slate-500">Cambodia trip planner</div></div></div><div className="pointer-events-auto"><ThemeToggle theme={theme} onToggle={onToggleTheme}/></div></div>
+    <div className="pointer-events-none absolute left-1 top-4 z-[500] flex items-center gap-2"><button onClick={onChangeVehicle} aria-label="Back to vehicle profile" className="pointer-events-auto flex h-[52px] items-center gap-2 rounded-xl border border-white/10 bg-ink/90 px-3 text-xs font-bold shadow-xl backdrop-blur transition hover:border-emeraldx/50 hover:text-emeraldx"><ArrowLeft size={16}/> Back</button><div className="flex items-center gap-2 rounded-xl border border-white/10 bg-ink/90 px-3 py-2 shadow-xl backdrop-blur"><img src="/favicon.svg" alt="SmartRoute AI logo" className="h-8 w-8 object-contain"/><div className="hidden sm:block"><div className="text-sm font-black">SmartRoute <span className="text-emeraldx">AI</span></div><div className="text-[9px] uppercase tracking-widest text-slate-500">Cambodia trip planner</div></div></div></div>
     <div className="pointer-events-none absolute right-1 top-4 z-[500] flex gap-2 lg:hidden"><button onClick={()=>setShowLeft(x=>!x)} aria-label={showLeft?'Hide menu and show map':'Show menu'} className="pointer-events-auto flex h-[52px] items-center gap-2 rounded-xl border border-white/10 bg-ink/90 px-3 text-xs font-bold shadow-xl backdrop-blur hover:border-emeraldx/50">{showLeft?<><MapIcon size={16}/> Map</>:<><Route size={16}/> Plan</>}</button></div>
     <div className="absolute bottom-1 left-1 right-1 top-[76px] z-[500] flex items-end justify-between gap-4 pointer-events-none lg:items-start">
       <div className={cx('pointer-events-auto max-h-full w-full overflow-y-auto lg:max-w-[390px] [direction:rtl] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden',!showLeft&&'hidden')}><div className="flex flex-col gap-3 [direction:ltr]">
@@ -604,10 +634,6 @@ function TripPlanner({config,onChangeVehicle,initialLocation,theme,onToggleTheme
 }
 const paths=['/','/vehicle','/location','/route']
 const defaultVehicleConfig={category:'',model:'',modified:false,energy:'',capacity:'',consumption:'',level:100,customName:''}
-const loadVehicleConfig=()=>{
-  try{return {...defaultVehicleConfig,...JSON.parse(localStorage.getItem('smartroute-vehicle-config')||'{}')}}
-  catch{return defaultVehicleConfig}
-}
 const stepFromPath=()=>{
   const clean=window.location.pathname.replace(/\/+$/,'')||'/'
   const i=paths.indexOf(clean)
@@ -615,19 +641,19 @@ const stepFromPath=()=>{
 }
 export default function App(){
   const [step,setStepState]=useState(stepFromPath)
-  const [config,setConfig]=useState(loadVehicleConfig)
-  const [theme,setTheme]=useState(()=>{try{return localStorage.getItem('smartroute-theme')==='dark'?'dark':'light'}catch{return 'light'}})
-  const toggleTheme=()=>setTheme(current=>current==='light'?'dark':'light')
-  useEffect(()=>{document.documentElement.dataset.theme=theme;document.querySelector('meta[name=\"theme-color\"]')?.setAttribute('content',theme==='dark'?'#121A16':'#F7F8F5');try{localStorage.setItem('smartroute-theme',theme)}catch{}},[theme])
+  const [config,setConfig]=useState(defaultVehicleConfig)
+  const [tripConfig,setTripConfig]=useState(defaultVehicleConfig)
   // Coordinates are deliberately session-only: a stored fix must never bypass
   // the mandatory permission gate on a fresh visit to the map.
   const [initialLocation,setInitialLocation]=useState(null)
-  const hasVehicleConfig=config.capacity>0&&config.consumption>0
-  const initialPathStep=stepFromPath()
-  const initialHasVehicle=(()=>{const saved=loadVehicleConfig();return saved.capacity>0&&saved.consumption>0})()
-  const [gateBackStep,setGateBackStep]=useState(()=>initialPathStep===3&&initialHasVehicle?1:0)
+  const hasTripConfig=tripConfig.capacity>0&&tripConfig.consumption>0
+  const [gateBackStep,setGateBackStep]=useState(0)
   const setStep=next=>{
     const target=paths[next]
+    if(step===1&&next!==1){
+      setTripConfig(config)
+      setConfig(defaultVehicleConfig)
+    }
     if(window.location.pathname!==target)window.history.pushState({step:next},'',target)
     setStepState(next)
     window.scrollTo(0,0)
@@ -636,25 +662,26 @@ export default function App(){
     // Normalize unknown paths (e.g. /foo) back to the root URL
     const known=paths.includes(window.location.pathname.replace(/\/+$/,'')||'/')
     if(!known)window.history.replaceState({step:0},'','/')
-    const onPop=()=>setStepState(stepFromPath())
+    const onPop=()=>{
+      const next=stepFromPath()
+      if(step===1&&next!==1){setTripConfig(config);setConfig(defaultVehicleConfig)}
+      setStepState(next)
+    }
     window.addEventListener('popstate',onPop)
     return ()=>window.removeEventListener('popstate',onPop)
-  },[])
-  useEffect(()=>{
-    try{localStorage.setItem('smartroute-vehicle-config',JSON.stringify(config))}catch{}
-  },[config])
+  },[step,config])
   useEffect(()=>{
     // A direct /route visit must pass through location before the map can render.
     if(step!==3)return
     if(!initialLocation){
-      setGateBackStep(hasVehicleConfig?1:0)
+      setGateBackStep(hasTripConfig?1:0)
       if(window.location.pathname!=='/location')window.history.replaceState({step:2},'','/location')
       setStepState(2)
-    }else if(!hasVehicleConfig){
+    }else if(!hasTripConfig){
       if(window.location.pathname!=='/vehicle')window.history.replaceState({step:1},'','/vehicle')
       setStepState(1)
     }
-  },[step,initialLocation,hasVehicleConfig])
+  },[step,initialLocation,hasTripConfig])
   useEffect(()=>{
     const titles=['SmartRoute AI — Cambodia Trip Planner','Vehicle profile · SmartRoute AI','Location access · SmartRoute AI','Map & Route · SmartRoute AI']
     const visibleStep=step===3&&!initialLocation?2:step
@@ -672,7 +699,7 @@ export default function App(){
     // when this tab has coordinates from an earlier trip.
     setInitialLocation(null)
     setGateBackStep(0)
-    setStep(2)
+    setStep(1)
   }
   const continueToMap=()=>{
     // Reuse the fresh fix from the gate after vehicle setup; do not ask again.
@@ -682,16 +709,16 @@ export default function App(){
   }
   const finishLocation=location=>{
     setInitialLocation(location)
-    // Skip vehicle setup for returning users who already have a valid profile.
+    // Continue with the vehicle profile captured when leaving setup.
     // The exact fix is handed to TripPlanner/MapView for the blue dot and center.
-    setStep(hasVehicleConfig?3:1)
+    setStep(hasTripConfig?3:1)
   }
   const visibleStep=step===3&&!initialLocation?2:step
   return visibleStep===0
-    ?<Welcome onStart={startSmartRoute} onRoute={()=>goToMap(0)} theme={theme} onToggleTheme={toggleTheme}/>
+    ?<Welcome onStart={startSmartRoute} onRoute={()=>goToMap(0)}/>
     :visibleStep===1
-      ?<Setup onBack={()=>setStep(0)} onGenerate={continueToMap} config={config} setConfig={setConfig} theme={theme} onToggleTheme={toggleTheme}/>
+      ?<Setup onBack={()=>setStep(0)} onGenerate={continueToMap} config={config} setConfig={setConfig}/>
       :visibleStep===2
-        ?<LocationGate onSuccess={finishLocation} onBack={()=>setStep(gateBackStep)} theme={theme} onToggleTheme={toggleTheme}/>
-        :<TripPlanner config={config} initialLocation={initialLocation} onChangeVehicle={()=>setStep(1)} theme={theme} onToggleTheme={toggleTheme}/>
+        ?<LocationGate onSuccess={finishLocation} onBack={()=>setStep(gateBackStep)}/>
+        :<TripPlanner config={tripConfig} initialLocation={initialLocation} onChangeVehicle={()=>setStep(1)}/>
 }
