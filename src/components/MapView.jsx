@@ -19,6 +19,8 @@ export default function MapView({ origin, destination, route, stations = [], fil
     if (!googleMapsKey || !host.current) return
     let alive = true
     let instance
+    let controlsQuery
+    let updateMapControls
     const authFailure = () => {
       if (alive) {
         setLoadError('Google rejected the API key. Check that it is valid, billing is enabled, and Maps JavaScript API is allowed for this key and localhost referrer.')
@@ -30,9 +32,11 @@ export default function MapView({ origin, destination, route, stations = [], fil
       if (!alive) return
       const { Map } = await maps.importLibrary('maps')
       if (!alive) return
+      const isCompactMap = window.matchMedia('(max-width: 767px)').matches
       instance = new Map(host.current, {
         center: { lat: 12.15, lng: 104.90 }, zoom: 7,
-        mapTypeControl: true, streetViewControl: false, fullscreenControl: true,
+        mapTypeControl: !isCompactMap, streetViewControl: false, fullscreenControl: !isCompactMap,
+        ...(isCompactMap ? { zoomControl: false, gestureHandling: 'greedy' } : {}),
         clickableIcons: false,
         styles: [
           { featureType: 'poi', stylers: [{ visibility: 'off' }] },
@@ -43,6 +47,17 @@ export default function MapView({ origin, destination, route, stations = [], fil
         if (event.latLng) clickRef.current?.({ lat: event.latLng.lat(), lng: event.latLng.lng() })
       })
       instance.addListener('maptypeid_changed', () => mapTypeChangeRef.current?.(instance.getMapTypeId()))
+      controlsQuery = window.matchMedia('(max-width: 767px)')
+      updateMapControls = () => {
+        const compact = controlsQuery.matches
+        instance.setOptions({
+          mapTypeControl: !compact,
+          fullscreenControl: !compact,
+          zoomControl: !compact,
+          gestureHandling: compact ? 'greedy' : 'auto',
+        })
+      }
+      controlsQuery.addEventListener?.('change', updateMapControls)
       map.current = instance
       setStatus('ready')
     }).catch(error => {
@@ -51,7 +66,12 @@ export default function MapView({ origin, destination, route, stations = [], fil
         setStatus('error')
       }
     })
-    return () => { alive = false; map.current = null; if (window.gm_authFailure === authFailure) delete window.gm_authFailure }
+    return () => {
+      alive = false
+      controlsQuery?.removeEventListener?.('change', updateMapControls)
+      map.current = null
+      if (window.gm_authFailure === authFailure) delete window.gm_authFailure
+    }
   }, [])
 
   useEffect(() => {

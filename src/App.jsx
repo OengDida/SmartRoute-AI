@@ -417,7 +417,7 @@ const loadTripSnapshot=()=>{
 }
 function TripPlanner({config,onChangeVehicle,initialLocation,theme,onToggleTheme}) {
   const [savedTrip]=useState(loadTripSnapshot)
-  const [mobilePanelExpanded,setMobilePanelExpanded]=useState(true)
+  const [mobilePanelExpanded,setMobilePanelExpanded]=useState(()=>window.matchMedia('(min-width: 768px)').matches)
   const [mapType,setMapType]=useState('roadmap')
   const [originName,setOriginName]=useState(()=>savedTrip?.originName||(initialLocation?'Current location':''))
   const [destinationName,setDestinationName]=useState(()=>savedTrip?.destinationName||'')
