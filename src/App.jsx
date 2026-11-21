@@ -419,13 +419,6 @@ function TripPlanner({config,onChangeVehicle,initialLocation,theme,onToggleTheme
   const [savedTrip]=useState(loadTripSnapshot)
   const [mobilePanelExpanded,setMobilePanelExpanded]=useState(()=>window.matchMedia('(min-width: 768px)').matches)
   const [mapType,setMapType]=useState('roadmap')
-  useEffect(()=>{
-    const viewport=document.querySelector('meta[name="viewport"]')
-    if(!viewport)return
-    const previous=viewport.getAttribute('content')
-    viewport.setAttribute('content','width=device-width, initial-scale=1.0, viewport-fit=cover')
-    return ()=>{if(previous)viewport.setAttribute('content',previous)}
-  },[])
   const plannerScreenRef=useRef(null)
   const mobileSheetPointerStart=useRef(null)
   const [mapFullscreen,setMapFullscreen]=useState(false)
@@ -733,7 +726,7 @@ export default function App(){
     try{localStorage.setItem('smartroute-theme',next)}catch{}
     setTheme(next)
   }
-  useEffect(()=>{document.querySelector('meta[name="theme-color"]')?.setAttribute('content',theme==='dark'?'#1D2429':'#F4F6F4')},[theme])
+  useEffect(()=>{document.querySelector('meta[name="theme-color"]')?.setAttribute('content',theme==='dark'?'#1E252B':'#F4F6F4')},[theme])
   const [config,setConfig]=useState(defaultVehicleConfig)
   const [tripConfig,setTripConfig]=useState(defaultVehicleConfig)
   // Coordinates are deliberately session-only: a stored fix must never bypass
