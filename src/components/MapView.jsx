@@ -2,16 +2,18 @@ import { useEffect, useRef, useState } from 'react'
 import { LocateFixed } from 'lucide-react'
 import { googleMapsKey, loadGoogleMaps } from '../googleMaps'
 
-export default function MapView({ origin, destination, route, stations = [], filter, onMapClick, rangePoint, initialLocation }) {
+export default function MapView({ origin, destination, route, stations = [], filter, onMapClick, rangePoint, initialLocation, mapType = 'roadmap', onMapTypeChange }) {
   const host = useRef(null)
   const map = useRef(null)
   const clickRef = useRef(onMapClick)
+  const mapTypeChangeRef = useRef(onMapTypeChange)
   const recenterRef = useRef(null)
   const [status, setStatus] = useState(googleMapsKey ? 'loading' : 'missing-key')
   const [loadError, setLoadError] = useState('')
   const [locationMessage, setLocationMessage] = useState('')
   const [locating, setLocating] = useState(false)
   useEffect(() => { clickRef.current = onMapClick }, [onMapClick])
+  useEffect(() => { mapTypeChangeRef.current = onMapTypeChange }, [onMapTypeChange])
 
   useEffect(() => {
     if (!googleMapsKey || !host.current) return
@@ -40,6 +42,7 @@ export default function MapView({ origin, destination, route, stations = [], fil
       instance.addListener('click', event => {
         if (event.latLng) clickRef.current?.({ lat: event.latLng.lat(), lng: event.latLng.lng() })
       })
+      instance.addListener('maptypeid_changed', () => mapTypeChangeRef.current?.(instance.getMapTypeId()))
       map.current = instance
       setStatus('ready')
     }).catch(error => {
@@ -50,6 +53,11 @@ export default function MapView({ origin, destination, route, stations = [], fil
     })
     return () => { alive = false; map.current = null; if (window.gm_authFailure === authFailure) delete window.gm_authFailure }
   }, [])
+
+  useEffect(() => {
+    const instance = map.current
+    if (status === 'ready' && instance && mapType) instance.setMapTypeId(mapType)
+  }, [mapType, status])
 
   useEffect(() => {
     const instance = map.current
@@ -286,7 +294,7 @@ export default function MapView({ origin, destination, route, stations = [], fil
         onClick={() => recenterRef.current?.()}
         aria-label="Recenter map to your location"
         title="Recenter map to your location"
-        className="absolute bottom-4 right-4 z-[650] flex h-11 w-11 items-center justify-center rounded-xl border border-white/10 bg-ink/95 text-blue-300 shadow-xl backdrop-blur transition hover:border-blue-300/50 hover:bg-slate-800 hover:text-blue-200 focus:outline-none focus:ring-2 focus:ring-blue-400/60"
+        className="map-recenter-fab absolute bottom-4 right-4 z-[650] flex h-11 w-11 items-center justify-center rounded-xl border border-white/10 bg-ink/95 text-blue-300 shadow-xl backdrop-blur transition hover:border-blue-300/50 hover:bg-slate-800 hover:text-blue-200 focus:outline-none focus:ring-2 focus:ring-blue-400/60"
       >
         <LocateFixed size={19} className={locating ? 'animate-pulse' : ''} />
       </button>

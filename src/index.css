@@ -238,3 +238,76 @@ input[type=number] { font-variant-numeric: tabular-nums; }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { scroll-behavior: auto !important; transition-duration: .01ms !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; }
 }
+
+/* Mobile route planner: keep Google Maps full-screen beneath a scrollable sheet. */
+.mobile-map-header, .planner-mobile-sheet-header { display: none; }
+.left-panel-hidden { display: none; }
+@media (max-width: 767px) {
+  .planner-screen { height: 100dvh; min-height: 100dvh; }
+  .planner-header { display: none; }
+  .mobile-map-header {
+    position: absolute; z-index: 700; top: 0; left: 0; right: 0;
+    display: flex; align-items: center; gap: 6px; padding: calc(env(safe-area-inset-top) + 8px) 8px 8px;
+    pointer-events: none;
+  }
+  .mobile-map-header > * { pointer-events: auto; }
+  .mobile-map-control {
+    display: inline-flex; height: 42px; min-height: 42px; align-items: center; justify-content: center; gap: 6px;
+    border: 1px solid var(--border); border-radius: 12px; background: var(--surface); color: var(--text-primary);
+    box-shadow: 0 3px 14px rgba(20, 32, 28, .12); font-size: 10px; font-weight: 700; white-space: nowrap;
+  }
+  .mobile-map-control:active { background: var(--surface-raised); }
+  .mobile-map-back { width: 42px; flex: 0 0 42px; }
+  .mobile-map-brand {
+    display: flex; min-width: 0; height: 42px; flex: 1 1 auto; align-items: center; gap: 6px;
+    overflow: hidden; border: 1px solid var(--border); border-radius: 12px; background: var(--surface);
+    padding: 0 7px; box-shadow: 0 3px 14px rgba(20, 32, 28, .12); color: var(--text-primary);
+    font-size: 11px; font-weight: 800; white-space: nowrap;
+  }
+  .mobile-map-brand img { width: 24px; height: 24px; flex: 0 0 24px; object-fit: contain; }
+  .mobile-map-brand span { overflow: hidden; text-overflow: ellipsis; }
+  .mobile-map-brand b { color: var(--accent-text); }
+  .mobile-map-layer { min-width: 62px; padding: 0 8px; }
+  .mobile-map-theme { min-width: 62px; padding: 0 8px; }
+  .mobile-map-theme svg, .mobile-map-layer svg { color: var(--accent-text); }
+
+  .planner-controls-layer { position: absolute; inset: 0; display: block; pointer-events: none; }
+  .planner-mobile-panel {
+    position: absolute; z-index: 600; right: 0; bottom: 0; left: 0;
+    display: flex; width: 100%; max-width: none; height: max(22dvh, 140px); max-height: none;
+    flex-direction: column; overflow: hidden; border: 1px solid var(--border); border-bottom: 0;
+    border-radius: 20px 20px 0 0; background: var(--surface); color: var(--text-primary);
+    box-shadow: 0 -8px 32px rgba(14, 25, 22, .16); direction: ltr; pointer-events: auto;
+    transition: height .32s cubic-bezier(.2,.75,.25,1), transform .32s ease, border-radius .32s ease;
+    -webkit-backdrop-filter: blur(16px); backdrop-filter: blur(16px);
+  }
+  .planner-mobile-panel[data-expanded="true"] { height: min(80dvh, calc(100dvh - env(safe-area-inset-top) - 12px)); }
+  .left-panel-hidden { display: flex; }
+  .planner-mobile-sheet-header { display: flex; flex: 0 0 auto; flex-direction: column; gap: 5px; padding: 8px 12px 8px; }
+  .planner-mobile-sheet-topline { display: flex; min-height: 44px; align-items: center; justify-content: space-between; gap: 8px; }
+  .planner-mobile-sheet-title { display: flex; min-width: 0; flex-direction: column; gap: 2px; color: var(--text-primary); font-size: 13px; font-weight: 800; line-height: 1.1; }
+  .planner-mobile-route-state { overflow: hidden; color: var(--text-muted); font-size: 10px; font-weight: 600; text-overflow: ellipsis; white-space: nowrap; }
+  .planner-mobile-sheet-toggle {
+    display: inline-flex; min-width: 112px; min-height: 44px; flex: 0 0 auto; align-items: center; justify-content: center; gap: 7px;
+    border: 1px solid var(--border); border-radius: 12px; background: var(--surface-subtle); color: var(--text-primary);
+    padding: 0 10px; font-size: 11px; font-weight: 800; transition: background-color .18s ease, border-color .18s ease;
+  }
+  .planner-mobile-sheet-toggle svg { color: var(--accent-text); transition: transform .28s ease; }
+  .planner-mobile-sheet-toggle:hover { border-color: var(--accent); background: var(--surface-raised); }
+  .planner-mobile-summary { display: none; min-width: 0; align-items: center; justify-content: space-between; gap: 8px; }
+  .planner-mobile-route-summary { display: flex; min-width: 0; flex: 1 1 auto; align-items: center; gap: 5px; overflow: hidden; color: var(--text-primary); font-size: 10px; font-weight: 700; }
+  .planner-mobile-route-summary span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .planner-mobile-route-summary svg { flex: 0 0 auto; color: var(--accent-text); }
+  .planner-mobile-vehicle-summary { display: flex; flex: 0 0 auto; gap: 4px; color: var(--text-muted); font-size: 9px; white-space: nowrap; }
+  .planner-mobile-recalculate { display: none; min-height: 36px; align-items: center; justify-content: center; gap: 7px; border-radius: 11px; background: var(--accent); color: #071411; font-size: 11px; font-weight: 850; }
+  .planner-mobile-recalculate:disabled { opacity: .45; cursor: not-allowed; }
+  .planner-mobile-content { min-height: 0; flex: 1 1 auto; overflow-y: auto; overscroll-behavior: contain; padding: 0 10px calc(env(safe-area-inset-bottom) + 16px); scrollbar-width: none; }
+  .planner-mobile-content::-webkit-scrollbar { display: none; }
+  .planner-mobile-panel[data-expanded="false"] .planner-mobile-summary { display: flex; }
+  .planner-mobile-panel[data-expanded="false"] .planner-mobile-recalculate { display: inline-flex; }
+  .planner-mobile-panel[data-expanded="false"] .planner-mobile-content { display: none; }
+  .planner-mobile-panel[data-expanded="false"] .planner-mobile-sheet-header { gap: 5px; padding: 6px 12px max(4px, env(safe-area-inset-bottom)); }
+  .planner-mobile-panel[data-expanded="false"] .planner-mobile-sheet-title { display: none; }
+  .planner-mobile-panel[data-expanded="false"] .planner-mobile-sheet-topline { justify-content: flex-end; }
+  .map-recenter-fab { bottom: calc(var(--mobile-panel-height, 0px) + 12px); }
+}
