@@ -423,6 +423,22 @@ function TripPlanner({config,onChangeVehicle,initialLocation,theme,onToggleTheme
   const mobileSheetPointerStart=useRef(null)
   const [mapFullscreen,setMapFullscreen]=useState(false)
   useEffect(()=>{
+    const viewportMeta=document.querySelector('meta[name="viewport"]')
+    if(!viewportMeta)return
+    const original=viewportMeta.getAttribute('content')||'width=device-width, initial-scale=1.0'
+    const mobileQuery=window.matchMedia('(max-width: 767px)')
+    const syncViewport=()=>{
+      const base=original.replace(/,\s*viewport-fit=[^,]+/i,'')
+      viewportMeta.setAttribute('content',mobileQuery.matches?`${base}, viewport-fit=cover`:original)
+    }
+    syncViewport()
+    mobileQuery.addEventListener?.('change',syncViewport)
+    return ()=>{
+      mobileQuery.removeEventListener?.('change',syncViewport)
+      viewportMeta.setAttribute('content',original)
+    }
+  },[])
+  useEffect(()=>{
     const syncFullscreen=()=>setMapFullscreen(document.fullscreenElement===plannerScreenRef.current)
     document.addEventListener('fullscreenchange',syncFullscreen)
     return ()=>document.removeEventListener('fullscreenchange',syncFullscreen)
@@ -638,7 +654,7 @@ function TripPlanner({config,onChangeVehicle,initialLocation,theme,onToggleTheme
         <Panel className="p-4"><div className="mb-3 flex items-center gap-2 text-xs font-extrabold"><Activity size={15} className="text-emeraldx"/> Range & dead-zone monitor</div><div className="flex items-end justify-between"><span className="text-[10px] text-slate-500">Estimated remaining range</span><b className={lowRange?'text-rose-300':'text-emeraldx'}>{fmt(currentRange)} km</b></div><div className="mt-2 h-2 overflow-hidden rounded-full bg-white/10"><div className={cx('h-full rounded-full',lowRange?'bg-rose-400':'bg-emeraldx')} style={{width:`${hasGoogleRoute&&currentRange>0?Math.min(100,distance/currentRange*100):0}%`}}/></div><div className="mt-2 text-[10px] leading-4 text-slate-400">{!origin||!destination?'Choose an origin and destination to check range.':!hasGoogleRoute?'Waiting for a Google driving route.':lowRange?'Range limit falls before destination.':'Estimated range covers the route.'}</div></Panel>
         {stationFinderPanel}
         <div className="rounded-xl border border-white/10 bg-ink/85 p-3 text-[10px] leading-4 text-slate-400 backdrop-blur"><Info size={13} className="mb-1 text-amberx"/> Blue line, distance, and drive time come from Google Routes (traffic-aware when available). If Google cannot calculate a route, no substitute route or ETA is shown. Use “Pin (choose on map)” to set a custom waypoint.</div></>
-  return <div ref={plannerScreenRef} className="planner-screen relative h-[100dvh] min-h-[480px] w-full overflow-hidden bg-slate-950 text-white lg:min-h-[720px]" style={{'--mobile-panel-height':mobilePanelExpanded?'80dvh':'calc(max(22dvh, 140px) + env(safe-area-inset-bottom))'}}>
+  return <div ref={plannerScreenRef} className="planner-screen relative h-[100dvh] min-h-[480px] w-full overflow-hidden bg-slate-950 text-white lg:min-h-[720px]" style={{'--mobile-panel-height':mobilePanelExpanded?'min(80dvh, calc(100dvh - env(safe-area-inset-top) - 12px))':'calc(max(22dvh, 140px) + env(safe-area-inset-bottom))'}}>
     <div className={cx('absolute inset-0',mapClickMode&&'pick-mode')}><MapView origin={origin} destination={destination} route={routePoints} stations={googleStations??[]} filter={filter} onMapClick={handleMapClick} rangePoint={rangePoint} initialLocation={initialLocation} mapType={mapType} onMapTypeChange={setMapType}/></div>
     <BrandHeader theme={theme} onToggleTheme={onToggleTheme} className="planner-header" action={<button onClick={onChangeVehicle} aria-label="Back to vehicle profile" className="header-action"><ArrowLeft size={16}/><span>Vehicle</span></button>} rightAction={<>
       <button type="button" onClick={()=>setMapType(current=>current==='roadmap'?'hybrid':'roadmap')} aria-label={mapType==='roadmap'?'Switch to satellite map':'Switch to street map'} title={mapType==='roadmap'?'Satellite view':'Street view'} className="header-action desktop-map-layer-control"><Layers size={16}/><span>{mapType==='roadmap'?'Satellite':'Map'}</span></button>
@@ -650,6 +666,9 @@ function TripPlanner({config,onChangeVehicle,initialLocation,theme,onToggleTheme
       <div className="mobile-map-brand" aria-label="SmartRoute AI"><img src="/favicon.svg" alt=""/><span>SmartRoute <b>AI</b></span></div>
       <button type="button" onClick={()=>setMapType(current=>current==='roadmap'?'hybrid':'roadmap')} aria-label={mapType==='roadmap'?'Switch to satellite map':'Switch to street map'} title={mapType==='roadmap'?'Satellite view':'Street view'} className="mobile-map-control mobile-map-layer"><Layers size={17}/><span>{mapType==='roadmap'?'Layers':'Map'}</span></button>
       <button type="button" onClick={onToggleTheme} aria-label={`Switch to ${theme==='light'?'dark':'light'} mode`} aria-pressed={theme==='dark'} className="mobile-map-control mobile-map-theme">{theme==='light'?<Moon size={16}/>:<Sun size={16}/>}<span>{theme==='light'?'Dark':'Light'}</span></button>
+      <button type="button" onClick={()=>setMobilePanelExpanded(value=>!value)} aria-expanded={mobilePanelExpanded} aria-label={mobilePanelExpanded?'Collapse route planner':'Expand route planner'} title={mobilePanelExpanded?'Collapse route planner':'Expand route planner'} className="mobile-map-control mobile-map-panel-toggle">
+        {mobilePanelExpanded?<ChevronDown size={19}/>:<ChevronUp size={19}/>}
+      </button>
     </header>
     <div className="planner-controls-layer absolute bottom-1 left-1 right-1 top-[76px] z-[500] flex items-end justify-between gap-4 pointer-events-none lg:items-start">
       <div data-expanded={mobilePanelExpanded} className={cx('planner-mobile-panel pointer-events-auto max-h-full w-full overflow-y-auto lg:max-w-[390px] [direction:rtl] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden',!showLeft&&'left-panel-hidden')}>
@@ -657,9 +676,6 @@ function TripPlanner({config,onChangeVehicle,initialLocation,theme,onToggleTheme
           <div className="planner-mobile-drag-handle" aria-hidden="true"><span/></div>
           <div className="planner-mobile-sheet-topline">
             <div className="planner-mobile-sheet-title"><span>Route planner</span><span className="planner-mobile-route-state">{hasGoogleRoute?`${fmt(distance)} km · ${fmtTime(duration)}`:routeStatus==='Choose an origin and destination'?'Set your route':routeStatus}</span></div>
-            <button type="button" aria-expanded={mobilePanelExpanded} aria-label={mobilePanelExpanded?'Drop Down route planner':'Pop Up route planner'} onClick={()=>setMobilePanelExpanded(value=>!value)} className="planner-mobile-sheet-toggle">
-              {mobilePanelExpanded?<><span>Drop Down</span><ChevronDown size={17}/></>:<><span>Pop Up</span><ChevronUp size={17}/></>}
-            </button>
           </div>
           <div className="planner-mobile-summary">
             <div className="planner-mobile-route-summary" title={`${origin?.name||'Choose origin'} to ${destination?.name||'Choose destination'}`}><span>{origin?.name||'Choose origin'}</span><ArrowRight size={13}/><span>{destination?.name||'Choose destination'}</span></div>

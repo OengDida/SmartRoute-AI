@@ -243,18 +243,19 @@ input[type=number] { font-variant-numeric: tabular-nums; }
 .mobile-map-header, .planner-mobile-sheet-header { display: none; }
 .left-panel-hidden { display: none; }
 @media (max-width: 767px) {
-  .planner-screen { position: fixed; top: 0; right: 0; bottom: auto; left: 0; width: 100%; height: 100lvh; min-height: 100lvh; --mobile-browser-gap: max(0px, calc(100lvh - 100dvh)); }
+  .planner-screen { position: fixed; inset: 0; width: 100%; height: 100dvh; min-height: 100dvh; background: transparent !important; }
   .planner-header { display: none; }
   .mobile-map-header {
     position: absolute; z-index: 700; top: 0; left: 0; right: 0;
     display: flex; align-items: center; gap: 6px; padding: calc(env(safe-area-inset-top) + 8px) 8px 8px;
-    pointer-events: none;
+    background: transparent; pointer-events: none;
   }
   .mobile-map-header > * { pointer-events: auto; }
   .mobile-map-control {
     display: inline-flex; height: 42px; min-height: 42px; align-items: center; justify-content: center; gap: 6px;
-    border: 1px solid var(--border); border-radius: 12px; background: var(--surface); color: var(--text-primary);
-    box-shadow: 0 3px 14px rgba(20, 32, 28, .12); font-size: 10px; font-weight: 700; white-space: nowrap;
+    border: 1px solid rgba(128, 145, 137, .4); border-radius: 12px; background: rgba(var(--surface-rgb), .86); color: var(--text-primary);
+    box-shadow: 0 3px 14px rgba(20, 32, 28, .12); -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px);
+    font-size: 10px; font-weight: 700; white-space: nowrap;
   }
   .mobile-map-control:active { background: var(--surface-raised); }
   .mobile-map-back { width: 42px; flex: 0 0 42px; }
@@ -269,14 +270,16 @@ input[type=number] { font-variant-numeric: tabular-nums; }
   .mobile-map-brand b { color: var(--accent-text); }
   .mobile-map-layer { min-width: 62px; padding: 0 8px; }
   .mobile-map-theme { min-width: 62px; padding: 0 8px; }
+  .mobile-map-panel-toggle { width: 44px; min-width: 44px; flex: 0 0 44px; border-color: rgba(32, 214, 154, .48); color: var(--accent-text); }
   .mobile-map-theme svg, .mobile-map-layer svg { color: var(--accent-text); }
+  .mobile-map-panel-toggle svg { transition: transform .25s ease; }
 
   .planner-controls-layer { position: absolute; inset: 0; display: block; pointer-events: none; }
   .planner-mobile-panel {
-    position: absolute; z-index: 600; right: 0; bottom: var(--mobile-browser-gap, 0px); left: 0;
+    position: absolute; z-index: 600; right: 0; bottom: 0; left: 0;
     display: flex; width: 100%; max-width: none; height: calc(max(22dvh, 140px) + env(safe-area-inset-bottom)); max-height: none;
     flex-direction: column; overflow: hidden; border: 1px solid var(--border); border-bottom: 0;
-    border-radius: 20px 20px 0 0; background: var(--surface); color: var(--text-primary);
+    border-radius: 20px 20px 0 0; background: rgba(var(--surface-rgb), .9); color: var(--text-primary);
     box-shadow: 0 -8px 32px rgba(14, 25, 22, .16); direction: ltr; pointer-events: auto;
     transition: height .32s cubic-bezier(.2,.75,.25,1), transform .32s ease, border-radius .32s ease;
     -webkit-backdrop-filter: blur(16px); backdrop-filter: blur(16px);
@@ -287,13 +290,6 @@ input[type=number] { font-variant-numeric: tabular-nums; }
   .planner-mobile-sheet-topline { display: flex; min-height: 44px; align-items: center; justify-content: space-between; gap: 8px; }
   .planner-mobile-sheet-title { display: flex; min-width: 0; flex-direction: column; gap: 2px; color: var(--text-primary); font-size: 13px; font-weight: 800; line-height: 1.1; }
   .planner-mobile-route-state { overflow: hidden; color: var(--text-muted); font-size: 10px; font-weight: 600; text-overflow: ellipsis; white-space: nowrap; }
-  .planner-mobile-sheet-toggle {
-    display: inline-flex; min-width: 112px; min-height: 44px; flex: 0 0 auto; align-items: center; justify-content: center; gap: 7px;
-    border: 1px solid var(--border); border-radius: 12px; background: var(--surface-subtle); color: var(--text-primary);
-    padding: 0 10px; font-size: 11px; font-weight: 800; transition: background-color .18s ease, border-color .18s ease;
-  }
-  .planner-mobile-sheet-toggle svg { color: var(--accent-text); transition: transform .28s ease; }
-  .planner-mobile-sheet-toggle:hover { border-color: var(--accent); background: var(--surface-raised); }
   .planner-mobile-summary { display: none; min-width: 0; align-items: center; justify-content: space-between; gap: 8px; }
   .planner-mobile-route-summary { display: flex; min-width: 0; flex: 1 1 auto; align-items: center; gap: 5px; overflow: hidden; color: var(--text-primary); font-size: 10px; font-weight: 700; }
   .planner-mobile-route-summary span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -308,8 +304,13 @@ input[type=number] { font-variant-numeric: tabular-nums; }
   .planner-mobile-panel[data-expanded="false"] .planner-mobile-content { display: none; }
   .planner-mobile-panel[data-expanded="false"] .planner-mobile-sheet-header { gap: 4px; padding: 4px 12px max(4px, env(safe-area-inset-bottom)); }
   .planner-mobile-panel[data-expanded="false"] .planner-mobile-sheet-title { display: none; }
-  .planner-mobile-panel[data-expanded="false"] .planner-mobile-sheet-topline { justify-content: flex-end; }
-  .map-recenter-fab { bottom: calc(var(--mobile-panel-height, 0px) + var(--mobile-browser-gap, 0px) + 12px); }
+  .planner-mobile-panel[data-expanded="false"] .planner-mobile-sheet-topline { display: none; }
+  .map-recenter-fab { bottom: calc(var(--mobile-panel-height, 0px) + 12px); }
+}
+
+@media (max-width: 380px) {
+  .mobile-map-layer, .mobile-map-theme { width: 42px; min-width: 42px; padding: 0; }
+  .mobile-map-layer span, .mobile-map-theme span { display: none; }
 }
 
 /* Desktop app-owned map controls replace Google Maps' built-in chrome. */
