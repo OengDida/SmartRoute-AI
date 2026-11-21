@@ -65,7 +65,7 @@ export default function MapView({ origin, destination, route, stations = [], fil
         icon: icon || { path: maps.SymbolPath.CIRCLE, scale: 10, fillColor: color, fillOpacity: 1, strokeColor: '#fff', strokeWeight: 2 },
       }))
     }
-    if (!origin?.isCurrentLocation) addPin(origin, `Origin: ${origin?.name || ''}`, '#1B4332', 'A')
+    if (!origin?.isCurrentLocation) addPin(origin, `Origin: ${origin?.name || ''}`, '#20d69a', 'A')
     addPin(destination, `Destination: ${destination?.name || ''}`, '#e53935', '', {
       url: 'https://maps.google.com/mapfiles/ms/icons/red-dot.png',
       scaledSize: new maps.Size(32, 32),
@@ -75,7 +75,7 @@ export default function MapView({ origin, destination, route, stations = [], fil
     visibleStations.forEach(station => addPin(
       station,
       `${station.name} · ${station.detail || 'Google Maps place'}`,
-      station.type === 'ev_only' ? '#1B4332' : station.type === 'gas_only' ? '#A66A16' : '#2D6A4F',
+      station.type === 'ev_only' ? '#53b7ff' : station.type === 'gas_only' ? '#f7b84b' : '#b69cff',
       station.type === 'ev_only' ? '⚡' : station.type === 'gas_only' ? '⛽' : '•',
     ))
     addPin(rangePoint, 'Estimated range limit', '#ff647c', '!')
