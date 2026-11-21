@@ -641,13 +641,6 @@ const stepFromPath=()=>{
 }
 export default function App(){
   const [step,setStepState]=useState(stepFromPath)
-<<<<<<< HEAD
-  const [config,setConfig]=useState(loadVehicleConfig)
-  const [theme,setTheme]=useState(()=>{try{return localStorage.getItem('smartroute-theme')==='dark'?'dark':'light'}catch{return 'light'}})
-  const toggleTheme=()=>setTheme(current=>current==='light'?'dark':'light')
-  useEffect(()=>{document.documentElement.dataset.theme=theme;document.querySelector('meta[name=\"theme-color\"]')?.setAttribute('content',theme==='dark'?'#121A16':'#F7F8F5');try{localStorage.setItem('smartroute-theme',theme)}catch{}},[theme])
-=======
->>>>>>> parent of d6f73fb (Merge pull request #9 from OengDida/zing)
   const [config,setConfig]=useState(defaultVehicleConfig)
   const [tripConfig,setTripConfig]=useState(defaultVehicleConfig)
   // Coordinates are deliberately session-only: a stored fix must never bypass
@@ -726,11 +719,6 @@ export default function App(){
     :visibleStep===1
       ?<Setup onBack={()=>setStep(0)} onGenerate={continueToMap} config={config} setConfig={setConfig}/>
       :visibleStep===2
-<<<<<<< HEAD
-        ?<LocationGate onSuccess={finishLocation} onBack={()=>setStep(gateBackStep)} theme={theme} onToggleTheme={toggleTheme}/>
-        :<TripPlanner config={config} initialLocation={initialLocation} onChangeVehicle={()=>setStep(1)} theme={theme} onToggleTheme={toggleTheme}/>
-=======
->>>>>>> parent of d6f73fb (Merge pull request #9 from OengDida/zing)
         ?<LocationGate onSuccess={finishLocation} onBack={()=>setStep(gateBackStep)}/>
         :<TripPlanner config={tripConfig} initialLocation={initialLocation} onChangeVehicle={()=>setStep(1)}/>
 }
