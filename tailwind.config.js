@@ -2,8 +2,13 @@
 export default {
   content: ['./index.html', './src/**/*.{js,jsx}'],
   theme: { extend: {
-    colors: { ink: '#071411', panel: '#0d1e19', emeraldx: '#20d69a', amberx: '#f7b84b' },
-    boxShadow: { glow: '0 0 35px rgba(32,214,154,.18)' }
+    colors: {
+      ink: 'rgb(var(--text-rgb) / <alpha-value>)',
+      panel: 'rgb(var(--surface-rgb) / <alpha-value>)',
+      emeraldx: 'rgb(var(--brand-rgb) / <alpha-value>)',
+      amberx: 'rgb(var(--warning-rgb) / <alpha-value>)',
+    },
+    boxShadow: { glow: 'var(--shadow-soft)' }
   }},
   plugins: []
 }
