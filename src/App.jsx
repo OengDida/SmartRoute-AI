@@ -354,14 +354,14 @@ function Setup({onBack,onGenerate,config,setConfig,theme,onToggleTheme}) {
 }
 const loadTripSnapshot=()=>{
   try{
-    const saved=JSON.parse(localStorage.getItem('smartroute-trip')||'null')
-    if(!saved||!Array.isArray(saved.route))return null
+    const saved=JSON.parse(sessionStorage.getItem('smartroute-trip')||'null')
+    if(!saved)return null
     const validPoint=p=>p&&Number.isFinite(p.lat)&&Number.isFinite(p.lng)
     return {
       ...saved,
       origin:validPoint(saved.origin)?saved.origin:null,
       destination:validPoint(saved.destination)?saved.destination:null,
-      route:saved.route.filter(p=>Array.isArray(p)&&Number.isFinite(p[0])&&Number.isFinite(p[1])),
+      route:Array.isArray(saved.route)?saved.route.filter(p=>Array.isArray(p)&&Number.isFinite(p[0])&&Number.isFinite(p[1])):[],
     }
   }catch{return null}
 }
@@ -473,12 +473,12 @@ function TripPlanner({config,onChangeVehicle,initialLocation,theme,onToggleTheme
   useEffect(()=>{
     try{
       const saved={origin,destination,originName,destinationName,route,distance,duration}
-      if(route.length>1||!localStorage.getItem('smartroute-trip'))localStorage.setItem('smartroute-trip',JSON.stringify(saved))
+      if(route.length>1||!sessionStorage.getItem('smartroute-trip'))sessionStorage.setItem('smartroute-trip',JSON.stringify(saved))
       else {
-        const previous=JSON.parse(localStorage.getItem('smartroute-trip')||'null')
+        const previous=JSON.parse(sessionStorage.getItem('smartroute-trip')||'null')
         const samePoint=(a,b)=>a&&b&&a.lat===b.lat&&a.lng===b.lng
         const sameTrip=samePoint(previous?.origin,origin)&&samePoint(previous?.destination,destination)
-        localStorage.setItem('smartroute-trip',JSON.stringify({...saved,route:sameTrip?previous?.route||[]:[],distance:sameTrip?previous?.distance||0:0,duration:sameTrip?previous?.duration||0:0}))
+        sessionStorage.setItem('smartroute-trip',JSON.stringify({...saved,route:sameTrip?previous?.route||[]:[],distance:sameTrip?previous?.distance||0:0,duration:sameTrip?previous?.duration||0:0}))
       }
     }catch{}
   },[origin,destination,originName,destinationName,route,distance,duration])
@@ -604,10 +604,6 @@ function TripPlanner({config,onChangeVehicle,initialLocation,theme,onToggleTheme
 }
 const paths=['/','/vehicle','/location','/route']
 const defaultVehicleConfig={category:'',model:'',modified:false,energy:'',capacity:'',consumption:'',level:100,customName:''}
-const loadVehicleConfig=()=>{
-  try{return {...defaultVehicleConfig,...JSON.parse(localStorage.getItem('smartroute-vehicle-config')||'{}')}}
-  catch{return defaultVehicleConfig}
-}
 const stepFromPath=()=>{
   const clean=window.location.pathname.replace(/\/+$/,'')||'/'
   const i=paths.indexOf(clean)
@@ -619,15 +615,19 @@ export default function App(){
   const [theme,setTheme]=useState(()=>{try{return localStorage.getItem('smartroute-theme')==='dark'?'dark':'light'}catch{return 'light'}})
   const toggleTheme=()=>setTheme(current=>current==='light'?'dark':'light')
   useEffect(()=>{document.documentElement.dataset.theme=theme;document.querySelector('meta[name=\"theme-color\"]')?.setAttribute('content',theme==='dark'?'#121A16':'#F7F8F5');try{localStorage.setItem('smartroute-theme',theme)}catch{}},[theme])
+  const [config,setConfig]=useState(defaultVehicleConfig)
+  const [tripConfig,setTripConfig]=useState(defaultVehicleConfig)
   // Coordinates are deliberately session-only: a stored fix must never bypass
   // the mandatory permission gate on a fresh visit to the map.
   const [initialLocation,setInitialLocation]=useState(null)
-  const hasVehicleConfig=config.capacity>0&&config.consumption>0
-  const initialPathStep=stepFromPath()
-  const initialHasVehicle=(()=>{const saved=loadVehicleConfig();return saved.capacity>0&&saved.consumption>0})()
-  const [gateBackStep,setGateBackStep]=useState(()=>initialPathStep===3&&initialHasVehicle?1:0)
+  const hasTripConfig=tripConfig.capacity>0&&tripConfig.consumption>0
+  const [gateBackStep,setGateBackStep]=useState(0)
   const setStep=next=>{
     const target=paths[next]
+    if(step===1&&next!==1){
+      setTripConfig(config)
+      setConfig(defaultVehicleConfig)
+    }
     if(window.location.pathname!==target)window.history.pushState({step:next},'',target)
     setStepState(next)
     window.scrollTo(0,0)
@@ -636,25 +636,26 @@ export default function App(){
     // Normalize unknown paths (e.g. /foo) back to the root URL
     const known=paths.includes(window.location.pathname.replace(/\/+$/,'')||'/')
     if(!known)window.history.replaceState({step:0},'','/')
-    const onPop=()=>setStepState(stepFromPath())
+    const onPop=()=>{
+      const next=stepFromPath()
+      if(step===1&&next!==1){setTripConfig(config);setConfig(defaultVehicleConfig)}
+      setStepState(next)
+    }
     window.addEventListener('popstate',onPop)
     return ()=>window.removeEventListener('popstate',onPop)
-  },[])
-  useEffect(()=>{
-    try{localStorage.setItem('smartroute-vehicle-config',JSON.stringify(config))}catch{}
-  },[config])
+  },[step,config])
   useEffect(()=>{
     // A direct /route visit must pass through location before the map can render.
     if(step!==3)return
     if(!initialLocation){
-      setGateBackStep(hasVehicleConfig?1:0)
+      setGateBackStep(hasTripConfig?1:0)
       if(window.location.pathname!=='/location')window.history.replaceState({step:2},'','/location')
       setStepState(2)
-    }else if(!hasVehicleConfig){
+    }else if(!hasTripConfig){
       if(window.location.pathname!=='/vehicle')window.history.replaceState({step:1},'','/vehicle')
       setStepState(1)
     }
-  },[step,initialLocation,hasVehicleConfig])
+  },[step,initialLocation,hasTripConfig])
   useEffect(()=>{
     const titles=['SmartRoute AI — Cambodia Trip Planner','Vehicle profile · SmartRoute AI','Location access · SmartRoute AI','Map & Route · SmartRoute AI']
     const visibleStep=step===3&&!initialLocation?2:step
@@ -672,7 +673,7 @@ export default function App(){
     // when this tab has coordinates from an earlier trip.
     setInitialLocation(null)
     setGateBackStep(0)
-    setStep(2)
+    setStep(1)
   }
   const continueToMap=()=>{
     // Reuse the fresh fix from the gate after vehicle setup; do not ask again.
@@ -682,9 +683,9 @@ export default function App(){
   }
   const finishLocation=location=>{
     setInitialLocation(location)
-    // Skip vehicle setup for returning users who already have a valid profile.
+    // Continue with the vehicle profile captured when leaving setup.
     // The exact fix is handed to TripPlanner/MapView for the blue dot and center.
-    setStep(hasVehicleConfig?3:1)
+    setStep(hasTripConfig?3:1)
   }
   const visibleStep=step===3&&!initialLocation?2:step
   return visibleStep===0
@@ -694,4 +695,6 @@ export default function App(){
       :visibleStep===2
         ?<LocationGate onSuccess={finishLocation} onBack={()=>setStep(gateBackStep)} theme={theme} onToggleTheme={toggleTheme}/>
         :<TripPlanner config={config} initialLocation={initialLocation} onChangeVehicle={()=>setStep(1)} theme={theme} onToggleTheme={toggleTheme}/>
+        ?<LocationGate onSuccess={finishLocation} onBack={()=>setStep(gateBackStep)}/>
+        :<TripPlanner config={tripConfig} initialLocation={initialLocation} onChangeVehicle={()=>setStep(1)}/>
 }

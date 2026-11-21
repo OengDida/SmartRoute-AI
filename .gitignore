@@ -1,5 +1,10 @@
 # Dependencies
 node_modules/
+.npm/
+.vite/
+
+# npm package archives created by `npm pack`
+*.tgz
 
 # Build output
 dist/
