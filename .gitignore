@@ -1,4 +1,28 @@
+# Dependencies
 node_modules/
-.env.local
-package-lock.json
+.npm/
+.vite/
+
+# npm package archives created by `npm pack`
+*.tgz
+
+# Build output
+dist/
+build/
+
+# Environment / secrets
+.env
+.env.*
+!.env.example
+
+# Logs
+*.log
+npm-debug.log*
+
+# OS / editor
 .DS_Store
+.vscode/
+.idea/
+
+# Vercel
+.vercel/

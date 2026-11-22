@@ -2,9 +2,21 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <meta name="theme-color" content="#071411" />
+    <meta name="theme-color" content="#F4F6F4" />
+    <script>
+      (() => {
+        let saved = null;
+        try { saved = localStorage.getItem('smartroute-theme'); } catch {}
+        const theme = saved === 'light' || saved === 'dark'
+          ? saved
+          : (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+        document.documentElement.dataset.theme = theme;
+        document.documentElement.style.colorScheme = theme;
+        document.querySelector('meta[name="theme-color"]')?.setAttribute('content', theme === 'dark' ? '#1D2429' : '#F4F6F4');
+      })();
+    </script>
     <meta name="description" content="SmartRoute AI — Cambodia highway trip, range and cost planner." />
     <title>SmartRoute AI — Cambodia Trip Planner</title>
   </head>
