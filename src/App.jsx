@@ -443,6 +443,8 @@ function TripPlanner({config,onChangeVehicle,initialLocation,theme,onToggleTheme
   const [origin,setOrigin]=useState(()=>savedTrip?.origin||(initialLocation?{lat:initialLocation.lat,lng:initialLocation.lng,name:'Current location',isCurrentLocation:true}:null))
   const [destination,setDestination]=useState(()=>savedTrip?.destination||null)
   const [route,setRoute]=useState(()=>savedTrip?.route||[])
+  const [routeChoices,setRouteChoices]=useState(()=>Array.isArray(savedTrip?.routeChoices)?savedTrip.routeChoices:[])
+  const [selectedRouteIndex,setSelectedRouteIndex]=useState(()=>Number.isInteger(savedTrip?.selectedRouteIndex)?savedTrip.selectedRouteIndex:0)
   const hasGoogleRoute=route.length>1
   const [distance,setDistance]=useState(()=>Number.isFinite(savedTrip?.distance)?savedTrip.distance:0)
   const [duration,setDuration]=useState(()=>Number.isFinite(savedTrip?.duration)?savedTrip.duration:0)
@@ -544,20 +546,26 @@ function TripPlanner({config,onChangeVehicle,initialLocation,theme,onToggleTheme
     }
     setGoogleStations(null)
     setStationSearch({status:'idle',progress:0,total:0,count:0,error:'',failedAreas:0})
+    setRouteChoices([]);setSelectedRouteIndex(0)
     setRoute([])
     setDistance(0);setDuration(0)
     setRouteStatus('Calculating Google route…');setRouteError('')
     try{
       const result=await computeGoogleRoute(a,b)
       if(requestId!==routeRequestRef.current)return
-      setRoute(result.path)
-      setDistance(result.distanceMeters/1000)
-      setDuration(result.durationMillis/60000)
-      setRouteStatus('Google Routes · traffic-aware driving route')
+      const choices=result.alternatives
+      const recommendedIndex=Math.max(0,choices.findIndex(choice=>choice.label==='Recommended'))
+      const selected=choices[recommendedIndex]
+      setRouteChoices(choices);setSelectedRouteIndex(recommendedIndex)
+      setRoute(selected.path)
+      setDistance(selected.distanceMeters/1000)
+      setDuration(selected.durationMillis/60000)
+      setRouteStatus(`${choices.length} route${choices.length===1?'':'s'} available · Google Routes`)
       setRouteError('')
     }catch(error){
       if(requestId!==routeRequestRef.current)return
       setRoute([])
+      setRouteChoices([]);setSelectedRouteIndex(0)
       setDistance(0);setDuration(0)
       setRouteStatus('Google route unavailable')
       setRouteError(`${googleMapsErrorMessage(error,'Google Routes')} No custom route or estimated distance/time was substituted.`)
@@ -569,7 +577,7 @@ function TripPlanner({config,onChangeVehicle,initialLocation,theme,onToggleTheme
   },[])
   useEffect(()=>{
     try{
-      const saved={origin,destination,originName,destinationName,route,distance,duration}
+      const saved={origin,destination,originName,destinationName,route,distance,duration,routeChoices,selectedRouteIndex}
       if(route.length>1||!sessionStorage.getItem('smartroute-trip'))sessionStorage.setItem('smartroute-trip',JSON.stringify(saved))
       else {
         const previous=JSON.parse(sessionStorage.getItem('smartroute-trip')||'null')
@@ -578,7 +586,14 @@ function TripPlanner({config,onChangeVehicle,initialLocation,theme,onToggleTheme
         sessionStorage.setItem('smartroute-trip',JSON.stringify({...saved,route:sameTrip?previous?.route||[]:[],distance:sameTrip?previous?.distance||0:0,duration:sameTrip?previous?.duration||0:0}))
       }
     }catch{}
-  },[origin,destination,originName,destinationName,route,distance,duration])
+  },[origin,destination,originName,destinationName,route,distance,duration,routeChoices,selectedRouteIndex])
+  const selectRoute=index=>{
+    const choice=routeChoices[index]
+    if(!choice)return
+    setSelectedRouteIndex(index);setRoute(choice.path)
+    setDistance(choice.distanceMeters/1000);setDuration(choice.durationMillis/60000)
+    setRouteStatus(`${choice.label} selected · Google Routes`)
+  }
   const pickOrigin=pl=>{
     const selected={...pl,isCurrentLocation:false}
     setOriginName(pl.formattedAddress||pl.name)
@@ -652,7 +667,7 @@ function TripPlanner({config,onChangeVehicle,initialLocation,theme,onToggleTheme
           <div className="flex flex-wrap gap-1.5">{stationFilters.map(([id,l])=><Pill key={id} active={filter===id} onClick={()=>setFilter(id)}>{l}</Pill>)}</div>
           <button onClick={findRouteStations} disabled={stationSearch.status==='loading'||routePoints.length<2} className="mt-3 flex w-full items-center justify-center rounded-xl bg-emeraldx py-2.5 text-xs font-extrabold text-ink hover:bg-emerald-300 disabled:opacity-60">{stationSearch.status==='loading'?`Searching ${stationSearch.progress}/${stationSearch.total} route areas…`:searchLabel[filter]}</button>
           {stationSearch.status==='error'&&<div className="mt-2 rounded-lg bg-rose-400/10 p-2 text-[10px] leading-4 text-rose-200">Google Places search failed: {stationSearch.error} Check Places API (New), billing, quota, and key referrer restrictions.</div>}
-    {stationSearch.status==='done'&&<div className="mt-2 text-[10px] leading-4 text-slate-400">Found {stationSearch.count} unique Google Places results for “{filterLabel(searchedFilter)}”{stationSearch.failedAreas?`; ${stationSearch.failedAreas} route-area searches failed${stationSearch.error?`: ${stationSearch.error}`:''}`:''}. Each route area returns up to 20 matches, so this may miss stations, especially in dense areas.</div>}
+    {stationSearch.status==='done'&&<div className="mt-2 text-[10px] leading-4 text-slate-400">Found {stationSearch.count} unique Google Places for “{filterLabel(searchedFilter)}” within 150 m of this route{stationSearch.failedAreas?`; ${stationSearch.failedAreas} route-area searches failed${stationSearch.error?`: ${stationSearch.error}`:''}`:''}. Results are searched along overlapping route segments, with up to 20 matches per segment.</div>}
           {stationSearch.status==='done'&&googleStations&&filter!==searchedFilter&&searchedFilter!=='all'&&searchedFilter!=='hybrid'&&<div className="mt-2 rounded-lg bg-amberx/10 p-2 text-[10px] leading-4 text-amberx">Route results were fetched for “{filterLabel(searchedFilter)}”. Press the search button to load “{filterLabel(filter)}”.</div>}
           {showStations&&<div className="mt-3 max-h-64 space-y-2 overflow-y-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">{googleStations===null?alongStations.filter(s=>matchesFilter(s,filter)).map(s=><div key={s.id} className="rounded-lg bg-black/20 p-3"><div className="flex justify-between gap-2"><b className="text-[11px]">{s.name}</b><span className="text-[9px] text-emeraldx">{s.road}</span></div><div className="mt-1 text-[10px] text-slate-500">{s.brand} · {s.hours} · {s.connectors.join(', ')||'Fuel'}</div></div>)
 :googleStations.filter(s=>matchesFilter(s,filter)).map(s=><div key={s.id} className="rounded-lg bg-black/20 p-3"><div className="flex justify-between gap-2"><b className="text-[11px]">{s.name}</b><span className={cx('text-[9px] font-bold',typeBadge[s.type]?.[1])}>{typeBadge[s.type]?.[0]}</span>{s.status==='CLOSED_PERMANENTLY'&&<span className="text-[9px] text-rose-300">Permanently closed</span>}</div><div className="mt-1 text-[10px] text-slate-400">{s.detail||'Address not provided'}</div><a className="mt-1 inline-block text-[10px] font-bold text-emeraldx hover:underline" href={s.mapsUrl} target="_blank" rel="noopener noreferrer">View on Google Maps ↗</a></div>)}</div>}
@@ -687,7 +702,7 @@ function TripPlanner({config,onChangeVehicle,initialLocation,theme,onToggleTheme
             <div className="planner-mobile-route-summary" title={`${origin?.name||'Choose origin'} to ${destination?.name||'Choose destination'}`}><span>{origin?.name||'Choose origin'}</span><ArrowRight size={13}/><span>{destination?.name||'Choose destination'}</span></div>
             <div className="planner-mobile-vehicle-summary"><span>{vehicleName}</span><span>· Level {config.level}%</span></div>
           </div>
-          <button type="button" onClick={()=>{calculate();setMobileDrawerOpen(false)}} disabled={!origin||!destination} className="planner-mobile-recalculate disabled:opacity-40"><Navigation size={15}/> Recalculate route</button>
+          <button type="button" onClick={()=>{calculate();setMobileDrawerOpen(false)}} disabled={!origin||!destination} className="planner-mobile-recalculate disabled:opacity-40"><Navigation size={15}/> Find alternative routes</button>
           <div className="planner-mobile-peek">
             <div className="planner-mobile-peek-heading"><Route size={13}/><span>Trip guidance</span><b>{hasGoogleRoute?money(isHybrid?hybridFuelCost+hybridElectricCost:totalCost,rates.usdToKhr):'Trip cost estimate below'}</b></div>
             <p>{recommendation()}</p>
@@ -702,8 +717,9 @@ function TripPlanner({config,onChangeVehicle,initialLocation,theme,onToggleTheme
 
           <div className="mt-4"><GoogleTextPlaceSearch label="Destination" value={destinationName} placeholder="Search a place in Cambodia" onPick={pickDestination} action={pinButton('destination')}/></div>
           <div className="mt-3 flex items-center justify-between rounded-xl bg-black/20 p-3"><div><div className="text-[10px] uppercase text-slate-500">Vehicle</div><div className="mt-1 text-xs font-bold">{vehicleName}</div></div><div className="text-right"><div className="text-[10px] uppercase text-slate-500">Current level</div><div className="mt-1 text-sm font-black text-emeraldx">{config.level}%</div></div></div>
-          <button onClick={()=>{calculate();setMobileDrawerOpen(false)}} disabled={!origin||!destination} className="disabled:opacity-40 mt-3 flex w-full items-center justify-center gap-2 rounded-xl bg-emeraldx py-3 text-xs font-extrabold text-ink hover:bg-emerald-300"><Navigation size={15}/> Recalculate route</button>
+          <button onClick={()=>{calculate();setMobileDrawerOpen(false)}} disabled={!origin||!destination} className="disabled:opacity-40 mt-3 flex w-full items-center justify-center gap-2 rounded-xl bg-emeraldx py-3 text-xs font-extrabold text-ink hover:bg-emerald-300"><Navigation size={15}/> Find alternative routes</button>
           <div className="mt-2 text-center text-[10px] text-slate-500">{routeStatus}</div>
+          {routeChoices.length>1&&<div className="mt-3 space-y-2" aria-label="Available routes">{routeChoices.map((choice,index)=><button type="button" key={`${choice.label}-${index}`} onClick={()=>selectRoute(index)} aria-pressed={selectedRouteIndex===index} className={cx('flex w-full items-center justify-between rounded-lg border p-3 text-left text-xs transition',selectedRouteIndex===index?'border-emeraldx/50 bg-emeraldx/10':'border-white/10 bg-black/20 hover:border-white/20')}><span><b className={selectedRouteIndex===index?'text-emeraldx':'text-slate-200'}>{choice.label}</b><span className="mt-1 block text-[10px] text-slate-500">{fmt(choice.distanceMeters/1000)} km · {fmtTime(choice.durationMillis/60000)}</span></span>{selectedRouteIndex===index&&<Check size={15} className="text-emeraldx"/>}</button>)}</div>}
         </Panel>
         <Panel className="p-4">
           <div className="mb-3 flex items-center gap-2"><Route size={16} className="text-emeraldx"/><div className="text-sm font-extrabold">Trip guidance</div><span className="ml-auto rounded-full bg-emeraldx/10 px-2 py-1 text-[9px] font-bold text-emeraldx">RULE-BASED</span></div>
