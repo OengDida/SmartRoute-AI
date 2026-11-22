@@ -249,7 +249,8 @@ input[type=number] { font-variant-numeric: tabular-nums; }
 }
 
 /* Mobile route planner: keep Google Maps full-screen beneath a scrollable sheet. */
-.mobile-map-header, .planner-mobile-sheet-header { display: none; }
+.mobile-map-header, .planner-mobile-drawer-header,
+.mobile-route-scrim, .mobile-route-drawer-tab { display: none; }
 .left-panel-hidden { display: none; }
 @media (max-width: 767px) {
   html.route-fullscreen,
@@ -275,7 +276,8 @@ input[type=number] { font-variant-numeric: tabular-nums; }
   }
   .planner-header { display: none; }
   .mobile-map-header {
-    position: absolute; z-index: 700; top: 0; left: 0; right: 0;
+    position: absolute; z-index: 450; top: 0;
+    left: calc(52px + env(safe-area-inset-left, 0px)); right: 8px;
     display: flex; align-items: center; gap: 6px;
     padding: calc(env(safe-area-inset-top, 0px) + 8px) 8px 8px;
     background: transparent; pointer-events: none;
@@ -300,53 +302,66 @@ input[type=number] { font-variant-numeric: tabular-nums; }
   .mobile-map-brand b { color: var(--accent-text); }
   .mobile-map-layer { min-width: 62px; padding: 0 8px; }
   .mobile-map-theme { min-width: 62px; padding: 0 8px; }
-  .mobile-map-panel-toggle { width: 44px; min-width: 44px; flex: 0 0 44px; border-color: rgba(32, 214, 154, .48); color: var(--accent-text); }
   .mobile-map-theme svg, .mobile-map-layer svg { color: var(--accent-text); }
-  .mobile-map-panel-toggle svg { transition: transform .25s ease; }
 
+  .planner-map-layer { z-index: 0; }
   .planner-controls-layer { position: absolute; inset: 0; display: block; pointer-events: none; }
+  .mobile-route-scrim {
+    position: absolute; z-index: 550; inset: 0;
+    display: block; width: 100%; height: 100%; border: 0;
+    background: rgba(5, 12, 10, .42); opacity: 0; pointer-events: none;
+    transition: opacity .3s ease-out;
+  }
+  .planner-controls-layer[data-drawer-open="true"] .mobile-route-scrim {
+    opacity: 1; pointer-events: auto;
+  }
   .planner-mobile-panel {
-    position: absolute; z-index: 600; right: 0; bottom: 0; left: 0;
-    display: flex; width: 100%; max-width: none;
-    height: calc(max(22vh, 140px) + env(safe-area-inset-bottom, 0px));
-    height: calc(max(22dvh, 140px) + env(safe-area-inset-bottom, 0px)); max-height: none;
-    flex-direction: column; overflow: hidden; border: 1px solid var(--border); border-bottom: 0;
-    border-radius: 20px 20px 0 0; background: rgba(var(--surface-rgb), .9); color: var(--text-primary);
-    box-shadow: 0 -8px 32px rgba(14, 25, 22, .16); direction: ltr; pointer-events: auto;
-    transition: height .32s cubic-bezier(.2,.75,.25,1), transform .32s ease, border-radius .32s ease;
+    position: fixed; z-index: 600; top: 0; bottom: 0; left: 0;
+    display: flex; width: min(82vw, 380px); max-width: none;
+    height: 100vh; height: 100dvh; max-height: none;
+    flex-direction: column; overflow: visible;
+    border: 1px solid var(--border); border-left: 0; border-radius: 0 16px 16px 0;
+    background: rgba(var(--surface-rgb), .97); color: var(--text-primary);
+    box-shadow: 8px 0 30px rgba(14, 25, 22, .2); direction: ltr; pointer-events: auto;
+    transform: translateX(-100%); transition: transform .3s ease-out;
     -webkit-backdrop-filter: blur(16px); backdrop-filter: blur(16px);
   }
-  .planner-mobile-panel[data-expanded="true"] {
-    height: min(80vh, calc(100vh - env(safe-area-inset-top, 0px) - 12px));
-    height: min(80dvh, calc(100dvh - env(safe-area-inset-top, 0px) - 12px));
-  }
+  .planner-mobile-panel[data-open="true"] { transform: translateX(0); }
   .left-panel-hidden { display: flex; }
-  .planner-mobile-sheet-header { display: flex; flex: 0 0 auto; flex-direction: column; gap: 5px; padding: 8px 12px 8px; }
+  .planner-mobile-drawer-header {
+    display: flex; flex: 0 0 auto; flex-direction: column; gap: 8px;
+    padding: calc(env(safe-area-inset-top, 0px) + 12px) 12px 12px calc(12px + env(safe-area-inset-left, 0px));
+    border-bottom: 1px solid var(--border);
+  }
   .planner-mobile-sheet-topline { display: flex; min-height: 44px; align-items: center; justify-content: space-between; gap: 8px; }
   .planner-mobile-sheet-title { display: flex; min-width: 0; flex-direction: column; gap: 2px; color: var(--text-primary); font-size: 13px; font-weight: 800; line-height: 1.1; }
   .planner-mobile-route-state { overflow: hidden; color: var(--text-muted); font-size: 10px; font-weight: 600; text-overflow: ellipsis; white-space: nowrap; }
-  .planner-mobile-summary { display: none; min-width: 0; align-items: center; justify-content: space-between; gap: 8px; }
+  .planner-mobile-summary { display: flex; min-width: 0; align-items: center; justify-content: space-between; gap: 8px; }
   .planner-mobile-route-summary { display: flex; min-width: 0; flex: 1 1 auto; align-items: center; gap: 5px; overflow: hidden; color: var(--text-primary); font-size: 10px; font-weight: 700; }
   .planner-mobile-route-summary span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .planner-mobile-route-summary svg { flex: 0 0 auto; color: var(--accent-text); }
   .planner-mobile-vehicle-summary { display: flex; flex: 0 0 auto; gap: 4px; color: var(--text-muted); font-size: 9px; white-space: nowrap; }
-  .planner-mobile-recalculate { display: none; min-height: 36px; align-items: center; justify-content: center; gap: 7px; border-radius: 11px; background: var(--accent); color: #071411; font-size: 11px; font-weight: 850; }
+  .planner-mobile-recalculate { display: inline-flex; width: 100%; min-height: 38px; align-items: center; justify-content: center; gap: 7px; border-radius: 11px; background: var(--accent); color: #071411; font-size: 11px; font-weight: 850; }
   .planner-mobile-recalculate:disabled { opacity: .45; cursor: not-allowed; }
-  .planner-mobile-content { min-height: 0; flex: 1 1 auto; overflow-y: auto; overscroll-behavior: contain; padding: 0 10px calc(env(safe-area-inset-bottom, 0px) + 16px); scrollbar-width: none; }
-  .planner-mobile-content::-webkit-scrollbar { display: none; }
-  .planner-mobile-panel[data-expanded="false"] .planner-mobile-summary { display: flex; }
-  .planner-mobile-panel[data-expanded="false"] .planner-mobile-recalculate { display: inline-flex; }
-  .planner-mobile-panel[data-expanded="false"] .planner-mobile-content { display: none; }
-  .planner-mobile-panel[data-expanded="false"] .planner-mobile-sheet-header { gap: 4px; padding: 4px 12px max(4px, env(safe-area-inset-bottom, 0px)); }
-  .planner-mobile-panel[data-expanded="false"] .planner-mobile-sheet-title { display: none; }
-  .planner-mobile-panel[data-expanded="false"] .planner-mobile-sheet-topline { display: none; }
-  .mobile-map-notice { top: calc(env(safe-area-inset-top, 0px) + 64px); }
-  .map-location-message { bottom: calc(var(--mobile-panel-height, 0px) + 64px); }
-  .map-recenter-fab { bottom: calc(var(--mobile-panel-height, 0px) + 12px); }
-  @supports (height: 100dvh) {
-    .map-location-message { bottom: calc(var(--mobile-panel-height-dynamic, var(--mobile-panel-height, 0px)) + 64px); }
-    .map-recenter-fab { bottom: calc(var(--mobile-panel-height-dynamic, var(--mobile-panel-height, 0px)) + 12px); }
+  .planner-mobile-content {
+    display: flex; min-height: 0; flex: 1 1 auto; flex-direction: column;
+    overflow-x: hidden; overflow-y: auto; overscroll-behavior: contain;
+    padding: 12px 12px calc(env(safe-area-inset-bottom, 0px) + 20px) calc(12px + env(safe-area-inset-left, 0px));
+    scrollbar-width: none; -webkit-overflow-scrolling: touch;
   }
+  .planner-mobile-content::-webkit-scrollbar { display: none; }
+  .planner-mobile-peek { display: block; overflow: hidden; border-top: 1px solid var(--border); padding: 8px 1px 0; }
+  .mobile-route-drawer-tab {
+    position: absolute; z-index: 2; top: calc(env(safe-area-inset-top, 0px) + 88px); left: calc(100% - 1px);
+    display: flex; min-width: 40px; min-height: 48px; align-items: center; justify-content: center;
+    border: 1px solid var(--border); border-left: 0; border-radius: 0 12px 12px 0;
+    background: var(--surface); color: var(--accent-text);
+    box-shadow: 4px 3px 14px rgba(14, 25, 22, .2); pointer-events: auto;
+  }
+  .mobile-route-drawer-tab:active { background: var(--surface-raised); }
+  .mobile-map-notice { top: calc(env(safe-area-inset-top, 0px) + 64px); }
+  .map-location-message { right: calc(8px + env(safe-area-inset-right, 0px)); bottom: calc(72px + env(safe-area-inset-bottom, 0px)); }
+  .map-recenter-fab { right: calc(8px + env(safe-area-inset-right, 0px)); bottom: calc(16px + env(safe-area-inset-bottom, 0px)); }
 }
 
 @media (max-width: 380px) {
@@ -364,18 +379,11 @@ input[type=number] { font-variant-numeric: tabular-nums; }
 .planner-screen:fullscreen { width: 100vw; height: 100dvh; min-height: 100dvh; }
 
 @media (max-width: 767px) {
-  .planner-mobile-sheet-header { touch-action: none; }
-  .planner-mobile-drag-handle { display: flex; height: 6px; align-items: center; justify-content: center; touch-action: none; cursor: grab; }
-  .planner-mobile-drag-handle span { width: 38px; height: 4px; border-radius: 999px; background: var(--text-muted); opacity: .55; }
-  .planner-mobile-peek { display: none; }
-  .planner-mobile-panel[data-expanded="false"] .planner-mobile-peek {
-    display: block; overflow: hidden; border-top: 1px solid var(--border); padding: 7px 1px 0;
-  }
   .planner-mobile-peek-heading { display: flex; align-items: center; gap: 5px; color: var(--text-primary); font-size: 10px; font-weight: 800; }
   .planner-mobile-peek-heading svg { color: var(--accent-text); }
   .planner-mobile-peek p { display: -webkit-box; overflow: hidden; margin: 3px 0 0; color: var(--text-muted); font-size: 9px; line-height: 1.35; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
   .planner-mobile-peek-heading b { min-width: 0; margin-left: auto; overflow: hidden; color: var(--accent-text); font-size: 9px; font-weight: 750; text-overflow: ellipsis; white-space: nowrap; }
 }
 @media (max-height: 650px) and (max-width: 767px) {
-  .planner-mobile-panel[data-expanded="false"] .planner-mobile-peek { display: none; }
+  .planner-mobile-peek { display: none; }
 }
