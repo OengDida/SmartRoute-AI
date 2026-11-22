@@ -46,16 +46,17 @@
 * { box-sizing: border-box; }
 html, body, #root {
   width: 100%;
+  height: 100vh;
+  height: 100dvh;
   min-width: 320px;
-  min-height: 100vh;
-  min-height: 100dvh;
-  overflow-x: hidden;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  overscroll-behavior: none;
+  background: var(--canvas);
 }
 html { background: var(--canvas); }
 body {
-  margin: 0;
-  min-height: 100vh;
-  min-height: 100dvh;
   background: var(--canvas);
   color: var(--text-primary);
   transition: background-color .18s ease, color .18s ease;
@@ -110,7 +111,20 @@ button { cursor: pointer; }
 :root [class~="accent-emerald-400"] { accent-color: var(--accent) !important; }
 
 .welcome, .location-screen, .vehicle-screen, .planner-screen { background: var(--canvas); color: var(--text-primary); }
-.welcome { min-height: 100vh; min-height: 100dvh; }
+.welcome, .location-screen, .vehicle-screen {
+  height: 100%;
+  min-height: 100vh;
+  min-height: 100dvh;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+.planner-screen {
+  height: 100vh;
+  height: 100dvh;
+  min-height: 100vh;
+  min-height: 100dvh;
+}
 .bg-grid { display: none; }
 .glass {
   background: var(--surface);
@@ -254,14 +268,15 @@ input[type=number] { font-variant-numeric: tabular-nums; }
 @media (max-width: 767px) {
   /* Use the dynamic viewport so no stale browser-toolbar-sized band remains. */
   .planner-screen {
-    position: fixed; inset: 0; width: 100%;
+    position: fixed; inset: 0; width: 100vw;
     height: 100vh; min-height: 100vh; height: 100dvh; min-height: 100dvh;
     background: transparent !important;
   }
   .planner-header { display: none; }
   .mobile-map-header {
     position: absolute; z-index: 700; top: 0; left: 0; right: 0;
-    display: flex; align-items: center; gap: 6px; padding: calc(env(safe-area-inset-top) + 8px) 8px 8px;
+    display: flex; align-items: center; gap: 6px;
+    padding: calc(env(safe-area-inset-top, 0px) + 8px) 8px 8px;
     background: transparent; pointer-events: none;
   }
   .mobile-map-header > * { pointer-events: auto; }
@@ -291,14 +306,19 @@ input[type=number] { font-variant-numeric: tabular-nums; }
   .planner-controls-layer { position: absolute; inset: 0; display: block; pointer-events: none; }
   .planner-mobile-panel {
     position: absolute; z-index: 600; right: 0; bottom: 0; left: 0;
-    display: flex; width: 100%; max-width: none; height: calc(max(22dvh, 140px) + env(safe-area-inset-bottom)); max-height: none;
+    display: flex; width: 100%; max-width: none;
+    height: calc(max(22vh, 140px) + env(safe-area-inset-bottom, 0px));
+    height: calc(max(22dvh, 140px) + env(safe-area-inset-bottom, 0px)); max-height: none;
     flex-direction: column; overflow: hidden; border: 1px solid var(--border); border-bottom: 0;
     border-radius: 20px 20px 0 0; background: rgba(var(--surface-rgb), .9); color: var(--text-primary);
     box-shadow: 0 -8px 32px rgba(14, 25, 22, .16); direction: ltr; pointer-events: auto;
     transition: height .32s cubic-bezier(.2,.75,.25,1), transform .32s ease, border-radius .32s ease;
     -webkit-backdrop-filter: blur(16px); backdrop-filter: blur(16px);
   }
-  .planner-mobile-panel[data-expanded="true"] { height: min(80dvh, calc(100dvh - env(safe-area-inset-top) - 12px)); }
+  .planner-mobile-panel[data-expanded="true"] {
+    height: min(80vh, calc(100vh - env(safe-area-inset-top, 0px) - 12px));
+    height: min(80dvh, calc(100dvh - env(safe-area-inset-top, 0px) - 12px));
+  }
   .left-panel-hidden { display: flex; }
   .planner-mobile-sheet-header { display: flex; flex: 0 0 auto; flex-direction: column; gap: 5px; padding: 8px 12px 8px; }
   .planner-mobile-sheet-topline { display: flex; min-height: 44px; align-items: center; justify-content: space-between; gap: 8px; }
@@ -311,15 +331,21 @@ input[type=number] { font-variant-numeric: tabular-nums; }
   .planner-mobile-vehicle-summary { display: flex; flex: 0 0 auto; gap: 4px; color: var(--text-muted); font-size: 9px; white-space: nowrap; }
   .planner-mobile-recalculate { display: none; min-height: 36px; align-items: center; justify-content: center; gap: 7px; border-radius: 11px; background: var(--accent); color: #071411; font-size: 11px; font-weight: 850; }
   .planner-mobile-recalculate:disabled { opacity: .45; cursor: not-allowed; }
-  .planner-mobile-content { min-height: 0; flex: 1 1 auto; overflow-y: auto; overscroll-behavior: contain; padding: 0 10px calc(env(safe-area-inset-bottom) + 16px); scrollbar-width: none; }
+  .planner-mobile-content { min-height: 0; flex: 1 1 auto; overflow-y: auto; overscroll-behavior: contain; padding: 0 10px calc(env(safe-area-inset-bottom, 0px) + 16px); scrollbar-width: none; }
   .planner-mobile-content::-webkit-scrollbar { display: none; }
   .planner-mobile-panel[data-expanded="false"] .planner-mobile-summary { display: flex; }
   .planner-mobile-panel[data-expanded="false"] .planner-mobile-recalculate { display: inline-flex; }
   .planner-mobile-panel[data-expanded="false"] .planner-mobile-content { display: none; }
-  .planner-mobile-panel[data-expanded="false"] .planner-mobile-sheet-header { gap: 4px; padding: 4px 12px max(4px, env(safe-area-inset-bottom)); }
+  .planner-mobile-panel[data-expanded="false"] .planner-mobile-sheet-header { gap: 4px; padding: 4px 12px max(4px, env(safe-area-inset-bottom, 0px)); }
   .planner-mobile-panel[data-expanded="false"] .planner-mobile-sheet-title { display: none; }
   .planner-mobile-panel[data-expanded="false"] .planner-mobile-sheet-topline { display: none; }
+  .mobile-map-notice { top: calc(env(safe-area-inset-top, 0px) + 64px); }
+  .map-location-message { bottom: calc(var(--mobile-panel-height, 0px) + 64px); }
   .map-recenter-fab { bottom: calc(var(--mobile-panel-height, 0px) + 12px); }
+  @supports (height: 100dvh) {
+    .map-location-message { bottom: calc(var(--mobile-panel-height-dynamic, var(--mobile-panel-height, 0px)) + 64px); }
+    .map-recenter-fab { bottom: calc(var(--mobile-panel-height-dynamic, var(--mobile-panel-height, 0px)) + 12px); }
+  }
 }
 
 @media (max-width: 380px) {
