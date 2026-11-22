@@ -4,7 +4,7 @@ import MapView from './components/MapView'
 import { computeGoogleRoute, geocodeGoogleAddress, googleMapsErrorMessage, loadGoogleMaps, searchGooglePlaces, searchStationsAlongRoute } from './googleMaps'
 import { vehicleGroups } from './data/vehicles'
 import { provinces, stations } from './data/places'
-import { defaultRates } from './data/rates'
+import { defaultRates, exchangeRateApiUrl, fetchLatestExchangeRate, fetchLatestFuelPrices, fuelPricesApiUrl } from './data/rates'
 import { fmt, haversine, money, nearestOnRoute } from './utils'
 
 const cx=(...x)=>x.filter(Boolean).join(' ')
@@ -444,6 +444,28 @@ function TripPlanner({config,onChangeVehicle,initialLocation,theme,onToggleTheme
   const [filter,setFilter]=useState('all')
   const [rates,setRates]=useState(defaultRates)
   const [showRates,setShowRates]=useState(false)
+  const [fuelPriceSource,setFuelPriceSource]=useState({status:'loading',startDate:'',endDate:'',sourceUrl:''})
+  const [exchangeRateSource,setExchangeRateSource]=useState({status:'loading',validDate:''})
+  useEffect(()=>{
+    const controller=new AbortController()
+    fetchLatestFuelPrices(controller.signal)
+      .then(prices=>{
+        setRates(current=>({...current,gasoline:prices.gasoline,diesel:prices.diesel}))
+        setFuelPriceSource({status:'live',startDate:prices.startDate,endDate:prices.endDate,sourceUrl:prices.sourceUrl})
+      })
+      .catch(error=>{
+        if(error.name!=='AbortError')setFuelPriceSource({status:'fallback',startDate:'',endDate:'',sourceUrl:''})
+      })
+    fetchLatestExchangeRate(controller.signal)
+      .then(exchange=>{
+        setRates(current=>({...current,usdToKhr:exchange.rate}))
+        setExchangeRateSource({status:'live',validDate:exchange.validDate})
+      })
+      .catch(error=>{
+        if(error.name!=='AbortError')setExchangeRateSource({status:'fallback',validDate:''})
+      })
+    return ()=>controller.abort()
+  },[])
   const [prompt,setPrompt]=useState('')
   const [mapClickMode,setMapClickMode]=useState(null)
   const [routeError,setRouteError]=useState('')
@@ -686,7 +708,7 @@ function TripPlanner({config,onChangeVehicle,initialLocation,theme,onToggleTheme
           {isHybrid?<><div className="mt-2 grid gap-2 sm:grid-cols-2"><div className="rounded-xl bg-black/20 p-3"><div className="flex justify-between text-[10px] text-slate-500"><span>Fuel-only estimate</span><span>L</span></div><div className="mt-1 text-xl font-black">{hasGoogleRoute?hybridFuelNeed.toFixed(1):'—'} <small className="text-xs font-medium text-slate-400">{hasGoogleRoute?'L':''}</small></div><div className="mt-1 text-[10px] text-slate-500">{isPHEV?'Vehicle rate':'Comparison'}: {fuelOnlyConsumption} L/100 km</div></div><div className="rounded-xl bg-black/20 p-3"><div className="flex justify-between text-[10px] text-slate-500"><span>Electric-only estimate</span><span>kWh</span></div><div className="mt-1 text-xl font-black">{hasGoogleRoute?hybridElectricNeed.toFixed(1):'—'} <small className="text-xs font-medium text-slate-400">{hasGoogleRoute?'kWh':''}</small></div><div className="mt-1 text-[10px] text-slate-500">{isPHEV?'Vehicle rate':'Comparison'}: {electricOnlyConsumption} kWh/100 km</div></div></div>{isPHEV&&hasGoogleRoute&&distance>vehicle.range&&<div className="mt-2 rounded-lg border border-amberx/20 bg-amberx/10 p-2 text-[10px] leading-4 text-amberx">Trip exceeds this PHEV’s listed {fmt(vehicle.range)} km EV range by {fmt(distance-vehicle.range)} km. The electric-only estimate assumes the vehicle can be charged during the trip.</div>}</>:<div className="mt-2 rounded-xl bg-black/20 p-3"><div className="flex justify-between text-[10px] text-slate-500"><span>Estimated {isEV?'energy':'fuel'} required</span><span>{isEV?'kWh':'L'}</span></div><div className="mt-1 text-xl font-black">{hasGoogleRoute?need.toFixed(1):'—'} <small className="text-xs font-medium text-slate-400">{hasGoogleRoute?(isEV?'kWh':'L'):''}</small></div></div>}
           {isHybrid?<div className="mt-2 grid gap-2 sm:grid-cols-2"><div className="rounded-xl border border-amberx/20 bg-amberx/5 p-3"><div className="text-[10px] text-amberx/80">Estimated fuel-only trip cost</div><div className="mt-1 text-xl font-black">{hasGoogleRoute?money(hybridFuelCost,rates.usdToKhr).split(' · ')[0]:'—'}</div><div className="text-xs text-slate-400">{hasGoogleRoute?money(hybridFuelCost,rates.usdToKhr).split(' · ')[1]:''}</div><div className="mt-1 text-[10px] text-slate-500">Gasoline · {fmt(rates.gasoline)} ៛/L</div></div><div className="rounded-xl border border-blue-300/20 bg-blue-300/5 p-3"><div className="text-[10px] text-blue-200/80">Estimated electric-only trip cost</div><div className="mt-1 text-xl font-black">{hasGoogleRoute?money(hybridElectricCost,rates.usdToKhr).split(' · ')[0]:'—'}</div><div className="text-xs text-slate-400">{hasGoogleRoute?money(hybridElectricCost,rates.usdToKhr).split(' · ')[1]:''}</div><div className="mt-1 text-[10px] text-slate-500">{isPHEV?'AC / grid charging':'DC fast-charge'} · {fmt(hybridElectricRate)} ៛/kWh</div></div></div>:<div className="mt-2 flex items-end justify-between rounded-xl border border-amberx/20 bg-amberx/5 p-3"><div><div className="text-[10px] text-amberx/80">Estimated trip cost</div><div className="mt-1 text-xl font-black">{hasGoogleRoute?money(totalCost,rates.usdToKhr).split(' · ')[0]:'—'}</div><div className="text-xs text-slate-400">{hasGoogleRoute?money(totalCost,rates.usdToKhr).split(' · ')[1]:''}</div></div><div className="text-right text-[10px] text-slate-500">{isEV?'DC fast-charge tariff':config.energy==='diesel'?'Diesel tariff':'Gasoline tariff'}<br/>{fmt(costRate)} ៛ / {isEV?'kWh':'L'}</div></div>}
           <div className="mt-3 flex items-center justify-between text-[10px]"><span className="text-slate-400">EV vs gasoline benchmark</span><span className="font-bold text-emeraldx">{hasGoogleRoute?<>{evCost<=gasCost?'EV saves':'Gas saves'} {money(save,rates.usdToKhr)}</>:'Google route required'}</span></div>
-          {showRates&&<div className="mt-4 space-y-3 border-t border-white/10 pt-3"><div className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Editable reference tariffs (KHR)</div>{[['gasoline','Regular gasoline / L'],['diesel','Diesel / L'],['ev','Pure EV DC fast charge / kWh'],['phevAc','PHEV AC / grid charging / kWh'],['usdToKhr','USD → KHR']].map(([k,l])=><label key={k} className="flex items-center justify-between gap-3 text-[11px] text-slate-400">{l}<input className="field w-28 py-2 text-right" type="number" value={rates[k]} onChange={e=>setRates(p=>({...p,[k]:Number(e.target.value)}))}/></label>)}<div className="text-[9px] leading-4 text-slate-500">Fuel schedule reference: 11–21 Nov 2026. Electricity tariffs are editable; PHEVs use AC / grid charging and pure EV estimates use DC fast charging.</div></div>}
+          {showRates&&<div className="mt-4 space-y-3 border-t border-white/10 pt-3"><div className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Editable reference tariffs (KHR)</div>{[['gasoline','Regular gasoline / L'],['diesel','Diesel / L'],['ev','Pure EV DC fast charge / kWh'],['phevAc','PHEV AC / grid charging / kWh'],['usdToKhr','USD → KHR']].map(([k,l])=><label key={k} className="flex items-center justify-between gap-3 text-[11px] text-slate-400">{l}<input className="field w-28 py-2 text-right" type="number" value={rates[k]} onChange={e=>setRates(p=>({...p,[k]:Number(e.target.value)}))}/></label>)}<div className="text-[9px] leading-4 text-slate-500">{fuelPriceSource.status==='loading'?'Loading the latest Cambodia fuel prices…':fuelPriceSource.status==='live'?<>Gasoline and diesel loaded from the MEF dataset for {fuelPriceSource.startDate}{fuelPriceSource.endDate?` to ${fuelPriceSource.endDate}`:''}. {fuelPriceSource.sourceUrl&&<a className="text-emeraldx underline" href={fuelPriceSource.sourceUrl} target="_blank" rel="noreferrer">Official price notice</a>}</>:'Could not load MEF fuel prices; showing the built-in reference rates.'} <a className="text-emeraldx underline" href={fuelPricesApiUrl} target="_blank" rel="noreferrer">Dataset API</a>. {exchangeRateSource.status==='live'?<>USD→KHR average from NBC, dated {exchangeRateSource.validDate}.</>:exchangeRateSource.status==='loading'?'Loading the latest NBC exchange rate.':'Could not load the NBC exchange rate; showing the built-in reference rate.'} <a className="text-emeraldx underline" href={exchangeRateApiUrl} target="_blank" rel="noreferrer">NBC real-time API</a>. Electricity tariffs are editable; PHEVs use AC / grid charging and pure EV estimates use DC fast charging.</div></div>}
         </Panel>
 
       <div className="flex flex-col gap-3 lg:hidden">{sidePanels}</div></div>
