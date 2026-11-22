@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { Activity, ArrowDownRight, ArrowLeft, ArrowRight, BatteryCharging, Bike, CarFront, Check, ChevronDown, ChevronLeft, ChevronRight, ChevronUp, Layers, Maximize2, Minimize2, CircleDollarSign, Clock3, Fuel, Gauge, Github, Info, LocateFixed, Leaf, Map as MapIcon, MapPin, Moon, Navigation, PlugZap, Route, Search, ShieldAlert, Sun, Truck, Zap } from 'lucide-react'
+import { Activity, ArrowDownRight, ArrowLeft, ArrowRight, BatteryCharging, Bike, CarFront, Check, ChevronDown, ChevronLeft, ChevronRight, Layers, Maximize2, Minimize2, CircleDollarSign, Clock3, Fuel, Gauge, Github, Info, LocateFixed, Leaf, Map as MapIcon, MapPin, Moon, Navigation, PlugZap, Route, Search, ShieldAlert, Sun, Truck, Zap } from 'lucide-react'
 import MapView from './components/MapView'
 import { computeGoogleRoute, geocodeGoogleAddress, googleMapsErrorMessage, loadGoogleMaps, searchGooglePlaces, searchStationsAlongRoute } from './googleMaps'
 import { vehicleGroups } from './data/vehicles'
@@ -419,10 +419,9 @@ const loadTripSnapshot=()=>{
 }
 function TripPlanner({config,onChangeVehicle,initialLocation,theme,onToggleTheme}) {
   const [savedTrip]=useState(loadTripSnapshot)
-  const [mobilePanelExpanded,setMobilePanelExpanded]=useState(()=>window.matchMedia('(min-width: 768px)').matches)
+  const [mobileDrawerOpen,setMobileDrawerOpen]=useState(false)
   const [mapType,setMapType]=useState('roadmap')
   const plannerScreenRef=useRef(null)
-  const mobileSheetPointerStart=useRef(null)
   const [mapFullscreen,setMapFullscreen]=useState(false)
   useEffect(()=>{
     const syncFullscreen=()=>setMapFullscreen(document.fullscreenElement===plannerScreenRef.current)
@@ -435,20 +434,6 @@ function TripPlanner({config,onChangeVehicle,initialLocation,theme,onToggleTheme
     const result=document.fullscreenElement===screen?document.exitFullscreen?.():screen.requestFullscreen?.()
     result?.catch?.(()=>{})
   }
-  const startMobileSheetDrag=event=>{
-    if(!window.matchMedia('(max-width: 767px)').matches)return
-    if(event.target instanceof Element&&event.target.closest('button,a,input,select,textarea'))return
-    mobileSheetPointerStart.current=event.clientY
-    event.currentTarget.setPointerCapture?.(event.pointerId)
-  }
-  const endMobileSheetDrag=event=>{
-    if(mobileSheetPointerStart.current===null)return
-    const delta=event.clientY-mobileSheetPointerStart.current
-    mobileSheetPointerStart.current=null
-    if(delta < -44)setMobilePanelExpanded(true)
-    else if(delta > 44)setMobilePanelExpanded(false)
-  }
-  const cancelMobileSheetDrag=()=>{mobileSheetPointerStart.current=null}
   const [originName,setOriginName]=useState(()=>savedTrip?.originName||(initialLocation?'Current location':''))
   const [destinationName,setDestinationName]=useState(()=>savedTrip?.destinationName||'')
   const [origin,setOrigin]=useState(()=>savedTrip?.origin||(initialLocation?{lat:initialLocation.lat,lng:initialLocation.lng,name:'Current location',isCurrentLocation:true}:null))
@@ -577,10 +562,17 @@ function TripPlanner({config,onChangeVehicle,initialLocation,theme,onToggleTheme
     calculate(origin,pl)
   }
   const isMobile=()=>window.matchMedia('(max-width:1023px)').matches
+  const isDrawerViewport=()=>window.matchMedia('(max-width:767px)').matches
   const togglePin=which=>{
-    if(mapClickMode===which){setMapClickMode(null);if(isMobile())setShowLeft(true);return}
+    if(mapClickMode===which){
+      setMapClickMode(null)
+      if(isDrawerViewport())setMobileDrawerOpen(true)
+      else if(isMobile())setShowLeft(true)
+      return
+    }
     setMapClickMode(which)
-    if(isMobile())setShowLeft(false)
+    if(isDrawerViewport())setMobileDrawerOpen(false)
+    else if(isMobile())setShowLeft(false)
   }
   const handleMapClick=p=>{
     if(!mapClickMode)return
@@ -589,9 +581,9 @@ function TripPlanner({config,onChangeVehicle,initialLocation,theme,onToggleTheme
     if(mapClickMode==='origin'){setOrigin(pin);setOriginName('Custom map pin');calculate(pin,destination)}
     else{setDestination(pin);setDestinationName('Custom map pin');calculate(origin,pin)}
     setMapClickMode(null)
-    if(isMobile())setShowLeft(true)
+    if(!isDrawerViewport()&&isMobile())setShowLeft(true)
   }
-  const pinButton=which=><button onClick={()=>{setMobilePanelExpanded(false);togglePin(which)}} aria-label={mapClickMode===which?'Cancel pin on map':'Pin (choose on map)'} title="Pin (choose on map)" className={cx('flex w-11 shrink-0 items-center justify-center rounded-[10px] border transition',mapClickMode===which?'border-emeraldx bg-emeraldx text-ink':'border-white/10 bg-white/5 text-slate-300 hover:border-emeraldx/50 hover:text-emeraldx')}><MapPin size={18}/></button>
+  const pinButton=which=><button onClick={()=>togglePin(which)} aria-label={mapClickMode===which?'Cancel pin on map':'Pin (choose on map)'} title="Pin (choose on map)" className={cx('flex w-11 shrink-0 items-center justify-center rounded-[10px] border transition',mapClickMode===which?'border-emeraldx bg-emeraldx text-ink':'border-white/10 bg-white/5 text-slate-300 hover:border-emeraldx/50 hover:text-emeraldx')}><MapPin size={18}/></button>
   const useCurrentLocation=()=>{
     if(!('geolocation' in navigator)){setLocNote('Location is not supported by this browser.');return}
     setLocating(true);setLocNote('')
@@ -641,8 +633,8 @@ function TripPlanner({config,onChangeVehicle,initialLocation,theme,onToggleTheme
         <Panel className="p-4"><div className="mb-3 flex items-center gap-2 text-xs font-extrabold"><Activity size={15} className="text-emeraldx"/> Range & dead-zone monitor</div><div className="flex items-end justify-between"><span className="text-[10px] text-slate-500">Estimated remaining range</span><b className={lowRange?'text-rose-300':'text-emeraldx'}>{fmt(currentRange)} km</b></div><div className="mt-2 h-2 overflow-hidden rounded-full bg-white/10"><div className={cx('h-full rounded-full',lowRange?'bg-rose-400':'bg-emeraldx')} style={{width:`${hasGoogleRoute&&currentRange>0?Math.min(100,distance/currentRange*100):0}%`}}/></div><div className="mt-2 text-[10px] leading-4 text-slate-400">{!origin||!destination?'Choose an origin and destination to check range.':!hasGoogleRoute?'Waiting for a Google driving route.':lowRange?'Range limit falls before destination.':'Estimated range covers the route.'}</div></Panel>
         {stationFinderPanel}
         <div className="rounded-xl border border-white/10 bg-ink/85 p-3 text-[10px] leading-4 text-slate-400 backdrop-blur"><Info size={13} className="mb-1 text-amberx"/> Blue line, distance, and drive time come from Google Routes (traffic-aware when available). If Google cannot calculate a route, no substitute route or ETA is shown. Use “Pin (choose on map)” to set a custom waypoint.</div></>
-  return <div ref={plannerScreenRef} className="planner-screen relative h-[100dvh] min-h-[480px] w-full overflow-hidden bg-slate-950 text-white lg:min-h-[720px]" style={{'--mobile-panel-height':mobilePanelExpanded?'min(80dvh, calc(100dvh - env(safe-area-inset-top) - 12px))':'calc(max(22dvh, 140px) + env(safe-area-inset-bottom))'}}>
-    <div className={cx('absolute inset-0',mapClickMode&&'pick-mode')}><MapView origin={origin} destination={destination} route={routePoints} stations={googleStations??[]} filter={filter} onMapClick={handleMapClick} rangePoint={rangePoint} initialLocation={initialLocation} mapType={mapType} onMapTypeChange={setMapType}/></div>
+  return <div ref={plannerScreenRef} className="planner-screen relative h-[100dvh] min-h-[480px] w-full overflow-hidden bg-slate-950 text-white lg:min-h-[720px]">
+    <div className={cx('planner-map-layer absolute inset-0',mapClickMode&&'pick-mode')}><MapView origin={origin} destination={destination} route={routePoints} stations={googleStations??[]} filter={filter} onMapClick={handleMapClick} rangePoint={rangePoint} initialLocation={initialLocation} mapType={mapType} onMapTypeChange={setMapType}/></div>
     <BrandHeader theme={theme} onToggleTheme={onToggleTheme} className="planner-header" action={<button onClick={onChangeVehicle} aria-label="Back to vehicle profile" className="header-action"><ArrowLeft size={16}/><span>Vehicle</span></button>} rightAction={<>
       <button type="button" onClick={()=>setMapType(current=>current==='roadmap'?'hybrid':'roadmap')} aria-label={mapType==='roadmap'?'Switch to satellite map':'Switch to street map'} title={mapType==='roadmap'?'Satellite view':'Street view'} className="header-action desktop-map-layer-control"><Layers size={16}/><span>{mapType==='roadmap'?'Satellite':'Map'}</span></button>
       <button type="button" onClick={togglePlannerFullscreen} aria-label={mapFullscreen?'Exit fullscreen map':'View map fullscreen'} title={mapFullscreen?'Exit fullscreen':'Fullscreen'} className="header-action desktop-map-fullscreen-control">{mapFullscreen?<Minimize2 size={16}/>:<Maximize2 size={16}/>}<span>{mapFullscreen?'Exit fullscreen':'Fullscreen'}</span></button>
@@ -653,23 +645,21 @@ function TripPlanner({config,onChangeVehicle,initialLocation,theme,onToggleTheme
       <div className="mobile-map-brand" aria-label="SmartRoute AI"><img src="/favicon.svg" alt=""/><span>SmartRoute <b>AI</b></span></div>
       <button type="button" onClick={()=>setMapType(current=>current==='roadmap'?'hybrid':'roadmap')} aria-label={mapType==='roadmap'?'Switch to satellite map':'Switch to street map'} title={mapType==='roadmap'?'Satellite view':'Street view'} className="mobile-map-control mobile-map-layer"><Layers size={17}/><span>{mapType==='roadmap'?'Layers':'Map'}</span></button>
       <button type="button" onClick={onToggleTheme} aria-label={`Switch to ${theme==='light'?'dark':'light'} mode`} aria-pressed={theme==='dark'} className="mobile-map-control mobile-map-theme">{theme==='light'?<Moon size={16}/>:<Sun size={16}/>}<span>{theme==='light'?'Dark':'Light'}</span></button>
-      <button type="button" onClick={()=>setMobilePanelExpanded(value=>!value)} aria-expanded={mobilePanelExpanded} aria-label={mobilePanelExpanded?'Collapse route planner':'Expand route planner'} title={mobilePanelExpanded?'Collapse route planner':'Expand route planner'} className="mobile-map-control mobile-map-panel-toggle">
-        {mobilePanelExpanded?<ChevronDown size={19}/>:<ChevronUp size={19}/>}
-      </button>
     </header>
-    <div className="planner-controls-layer absolute bottom-1 left-1 right-1 top-[76px] z-[500] flex items-end justify-between gap-4 pointer-events-none lg:items-start">
-      <div data-expanded={mobilePanelExpanded} className={cx('planner-mobile-panel pointer-events-auto max-h-full w-full overflow-y-auto lg:max-w-[390px] [direction:rtl] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden',!showLeft&&'left-panel-hidden')}>
-        <div className="planner-mobile-sheet-header" onPointerDown={startMobileSheetDrag} onPointerUp={endMobileSheetDrag} onPointerCancel={cancelMobileSheetDrag}>
-          <div className="planner-mobile-drag-handle" aria-hidden="true"><span/></div>
+    <div data-drawer-open={mobileDrawerOpen} className="planner-controls-layer absolute bottom-1 left-1 right-1 top-[76px] z-[500] flex items-end justify-between gap-4 pointer-events-none lg:items-start">
+      <button type="button" className="mobile-route-scrim" tabIndex={mobileDrawerOpen?0:-1} aria-hidden={!mobileDrawerOpen} aria-label="Close route planner drawer" onClick={()=>setMobileDrawerOpen(false)}/>
+      <div id="mobile-route-drawer" data-open={mobileDrawerOpen} className={cx('planner-mobile-panel pointer-events-auto max-h-full w-full overflow-y-auto lg:max-w-[390px] [direction:rtl] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden',!showLeft&&'left-panel-hidden')}>
+        <div className="planner-mobile-drawer-header">
           <div className="planner-mobile-sheet-topline">
+            <button type="button" onClick={onChangeVehicle} aria-label="Back to vehicle profile" className="mobile-map-control mobile-map-back"><ArrowLeft size={17}/></button>
             <div className="planner-mobile-sheet-title"><span>Route planner</span><span className="planner-mobile-route-state">{hasGoogleRoute?`${fmt(distance)} km · ${fmtTime(driveTime)}`:routeStatus==='Choose an origin and destination'?'Set your route':routeStatus}</span></div>
           </div>
           <div className="planner-mobile-summary">
             <div className="planner-mobile-route-summary" title={`${origin?.name||'Choose origin'} to ${destination?.name||'Choose destination'}`}><span>{origin?.name||'Choose origin'}</span><ArrowRight size={13}/><span>{destination?.name||'Choose destination'}</span></div>
             <div className="planner-mobile-vehicle-summary"><span>{vehicleName}</span><span>· Level {config.level}%</span></div>
           </div>
-          <button type="button" onClick={()=>{calculate();setMobilePanelExpanded(false)}} disabled={!origin||!destination} className="planner-mobile-recalculate disabled:opacity-40"><Navigation size={15}/> Recalculate route</button>
-          <div className="planner-mobile-peek" aria-hidden={mobilePanelExpanded}>
+          <button type="button" onClick={()=>{calculate();setMobileDrawerOpen(false)}} disabled={!origin||!destination} className="planner-mobile-recalculate disabled:opacity-40"><Navigation size={15}/> Recalculate route</button>
+          <div className="planner-mobile-peek">
             <div className="planner-mobile-peek-heading"><Route size={13}/><span>Trip guidance</span><b>{hasGoogleRoute?money(isHybrid?hybridFuelCost+hybridElectricCost:totalCost,rates.usdToKhr):'Trip cost estimate below'}</b></div>
             <p>{recommendation()}</p>
           </div>
@@ -683,7 +673,7 @@ function TripPlanner({config,onChangeVehicle,initialLocation,theme,onToggleTheme
 
           <div className="mt-4"><GoogleTextPlaceSearch label="Destination" value={destinationName} placeholder="Search a place in Cambodia" onPick={pickDestination} action={pinButton('destination')}/></div>
           <div className="mt-3 flex items-center justify-between rounded-xl bg-black/20 p-3"><div><div className="text-[10px] uppercase text-slate-500">Vehicle</div><div className="mt-1 text-xs font-bold">{vehicleName}</div></div><div className="text-right"><div className="text-[10px] uppercase text-slate-500">Current level</div><div className="mt-1 text-sm font-black text-emeraldx">{config.level}%</div></div></div>
-          <button onClick={()=>{calculate();setMobilePanelExpanded(false)}} disabled={!origin||!destination} className="disabled:opacity-40 mt-3 flex w-full items-center justify-center gap-2 rounded-xl bg-emeraldx py-3 text-xs font-extrabold text-ink hover:bg-emerald-300"><Navigation size={15}/> Recalculate route</button>
+          <button onClick={()=>{calculate();setMobileDrawerOpen(false)}} disabled={!origin||!destination} className="disabled:opacity-40 mt-3 flex w-full items-center justify-center gap-2 rounded-xl bg-emeraldx py-3 text-xs font-extrabold text-ink hover:bg-emerald-300"><Navigation size={15}/> Recalculate route</button>
           <div className="mt-2 text-center text-[10px] text-slate-500">{routeStatus}</div>
         </Panel>
         <Panel className="p-4">
@@ -702,14 +692,18 @@ function TripPlanner({config,onChangeVehicle,initialLocation,theme,onToggleTheme
           {showRates&&<div className="mt-4 space-y-3 border-t border-white/10 pt-3"><div className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Editable reference tariffs (KHR)</div>{[['gasoline','Regular gasoline / L'],['diesel','Diesel / L'],['ev','Pure EV DC fast charge / kWh'],['phevAc','PHEV AC / grid charging / kWh'],['usdToKhr','USD → KHR']].map(([k,l])=><label key={k} className="flex items-center justify-between gap-3 text-[11px] text-slate-400">{l}<input className="field w-28 py-2 text-right" type="number" value={rates[k]} onChange={e=>setRates(p=>({...p,[k]:Number(e.target.value)}))}/></label>)}<div className="text-[9px] leading-4 text-slate-500">Fuel schedule reference: 11–21 Nov 2026. Electricity tariffs are editable; PHEVs use AC / grid charging and pure EV estimates use DC fast charging.</div></div>}
         </Panel>
 
-      <div className="flex flex-col gap-3 lg:hidden">{sidePanels}</div></div></div>
+      <div className="flex flex-col gap-3 lg:hidden">{sidePanels}</div></div>
+        <button type="button" className="mobile-route-drawer-tab" aria-controls="mobile-route-drawer" aria-expanded={mobileDrawerOpen} aria-label={mobileDrawerOpen?'Hide route planner':'Show route planner'} onClick={()=>setMobileDrawerOpen(value=>!value)}>
+          {mobileDrawerOpen?<ChevronLeft size={20}/>:<ChevronRight size={20}/>}
+        </button>
+      </div>
       <div className={cx('pointer-events-auto ml-auto hidden max-h-full w-[290px] flex-col gap-3 overflow-y-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden',showRight&&'lg:flex')}>{sidePanels}
       </div>
     </div>
     <button onClick={()=>setShowLeft(x=>!x)} aria-label={showLeft?'Hide left menu':'Show left menu'} title={showLeft?'Hide menu':'Show menu'} style={{left:showLeft?'min(404px, calc(100vw - 44px))':'4px'}} className="absolute top-[84px] z-[600] hidden h-10 w-8 items-center justify-center rounded-xl border border-white/10 bg-ink/90 text-slate-300 shadow-xl backdrop-blur transition-all hover:border-emeraldx/50 hover:text-emeraldx lg:flex">{showLeft?<ChevronLeft size={18}/>:<ChevronRight size={18}/>}</button>
     <button onClick={()=>setShowRight(x=>!x)} aria-label={showRight?'Hide right menu':'Show right menu'} title={showRight?'Hide menu':'Show menu'} style={{right:showRight?'304px':'4px'}} className="absolute top-[84px] z-[600] hidden h-10 w-8 items-center justify-center rounded-xl border border-white/10 bg-ink/90 text-slate-300 shadow-xl backdrop-blur transition-all hover:border-emeraldx/50 hover:text-emeraldx lg:flex">{showRight?<ChevronRight size={18}/>:<ChevronLeft size={18}/>}</button>
-    {mapClickMode&&<div className="absolute left-1/2 top-[76px] z-[600] flex -translate-x-1/2 items-center gap-3 whitespace-nowrap rounded-xl border border-emeraldx/40 bg-ink/95 px-4 py-2.5 text-xs font-bold shadow-xl backdrop-blur"><MapPin size={15} className="text-emeraldx"/>Tap the map to set {mapClickMode}<button onClick={()=>togglePin(mapClickMode)} className="text-slate-400 hover:text-white">Cancel</button></div>}
-    {routeError&&<div role="status" className="absolute left-2 right-2 top-[76px] z-[600] max-w-xs lg:left-auto lg:bottom-4 lg:right-4 lg:top-auto rounded-xl border border-amberx/30 bg-ink/95 p-3 text-[10px] leading-4 text-amberx shadow-xl">{routeError}</div>}
+    {mapClickMode&&<div className="mobile-map-notice absolute left-1/2 top-[76px] z-[600] flex -translate-x-1/2 items-center gap-3 whitespace-nowrap rounded-xl border border-emeraldx/40 bg-ink/95 px-4 py-2.5 text-xs font-bold shadow-xl backdrop-blur"><MapPin size={15} className="text-emeraldx"/>Tap the map to set {mapClickMode}<button onClick={()=>togglePin(mapClickMode)} className="text-slate-400 hover:text-white">Cancel</button></div>}
+    {routeError&&<div role="status" className="mobile-map-notice absolute left-2 right-2 top-[76px] z-[600] max-w-xs lg:left-auto lg:bottom-4 lg:right-4 lg:top-auto rounded-xl border border-amberx/30 bg-ink/95 p-3 text-[10px] leading-4 text-amberx shadow-xl">{routeError}</div>}
   </div>
 }
 const paths=['/','/vehicle','/location','/route']
@@ -803,6 +797,12 @@ export default function App(){
     setStep(hasTripConfig?3:1)
   }
   const visibleStep=step===3&&!initialLocation?2:step
+  useEffect(()=>{
+    const routeMode=visibleStep===3
+    const routeRoots=[document.documentElement,document.body,document.getElementById('root')]
+      .filter(Boolean)
+    routeRoots.forEach(element=>element.classList.toggle('route-fullscreen',routeMode))
+  },[visibleStep])
   return visibleStep===0
     ?<Welcome onStart={startSmartRoute} onRoute={()=>goToMap(0)} theme={theme} onToggleTheme={toggleTheme}/>
     :visibleStep===1

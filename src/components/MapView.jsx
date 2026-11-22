@@ -307,7 +307,7 @@ export default function MapView({ origin, destination, route, stations = [], fil
   return <div className="google-map relative h-full w-full">
     <div ref={host} className="h-full w-full" />
     {status === 'ready' && <>
-      {locationMessage && <div role="status" className="absolute bottom-[76px] right-4 z-[650] max-w-[min(300px,calc(100vw-2rem))] rounded-xl border border-white/10 bg-ink/95 px-3 py-2 text-[10px] leading-4 text-slate-300 shadow-xl backdrop-blur">
+      {locationMessage && <div role="status" className="map-location-message absolute bottom-[76px] right-4 z-[650] max-w-[min(300px,calc(100vw-2rem))] rounded-xl border border-white/10 bg-ink/95 px-3 py-2 text-[10px] leading-4 text-slate-300 shadow-xl backdrop-blur">
         {locationMessage}
       </div>}
       <button
