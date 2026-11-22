@@ -638,7 +638,7 @@ function TripPlanner({config,onChangeVehicle,initialLocation,theme,onToggleTheme
       <button onClick={()=>setShowLeft(x=>!x)} aria-label={showLeft?'Hide menu and show map':'Show menu'} className="mobile-plan-toggle"><span className="mobile-plan-label">{showLeft?'Map':'Plan'}</span>{showLeft?<MapIcon size={16}/>:<Route size={16}/>}</button>
     </>}/>
     <header className="mobile-map-header" aria-label="Route map controls">
-      <button type="button" onClick={onChangeVehicle} aria-label="Back to vehicle profile" className="mobile-map-control mobile-map-back"><ArrowLeft size={18}/></button>
+      <button type="button" onClick={onChangeVehicle} aria-label="Back" className="mobile-map-control mobile-map-back"><ArrowLeft size={18}/><span>Back</span></button>
       <div className="mobile-map-brand" aria-label="SmartRoute AI"><img src="/favicon.svg" alt=""/><span>SmartRoute <b>AI</b></span></div>
       <button type="button" onClick={()=>setMapType(current=>current==='roadmap'?'hybrid':'roadmap')} aria-label={mapType==='roadmap'?'Switch to satellite map':'Switch to street map'} title={mapType==='roadmap'?'Satellite view':'Street view'} className="mobile-map-control mobile-map-layer"><Layers size={17}/><span>{mapType==='roadmap'?'Layers':'Map'}</span></button>
       <button type="button" onClick={onToggleTheme} aria-label={`Switch to ${theme==='light'?'dark':'light'} mode`} aria-pressed={theme==='dark'} className="mobile-map-control mobile-map-theme">{theme==='light'?<Moon size={16}/>:<Sun size={16}/>}<span>{theme==='light'?'Dark':'Light'}</span></button>
@@ -648,7 +648,7 @@ function TripPlanner({config,onChangeVehicle,initialLocation,theme,onToggleTheme
       <div id="mobile-route-drawer" data-open={mobileDrawerOpen} className={cx('planner-mobile-panel pointer-events-auto max-h-full w-full overflow-y-auto lg:max-w-[390px] [direction:rtl] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden',!showLeft&&'left-panel-hidden')}>
         <div className="planner-mobile-drawer-header">
           <div className="planner-mobile-sheet-topline">
-            <button type="button" onClick={onChangeVehicle} aria-label="Back to vehicle profile" className="mobile-map-control mobile-map-back"><ArrowLeft size={17}/></button>
+            <button type="button" onClick={onChangeVehicle} aria-label="Back to vehicle profile" className="mobile-map-control mobile-map-back mobile-drawer-back"><ArrowLeft size={17}/></button>
             <div className="planner-mobile-sheet-title"><span>Route planner</span><span className="planner-mobile-route-state">{hasGoogleRoute?`${fmt(distance)} km · ${fmtTime(duration)}`:routeStatus==='Choose an origin and destination'?'Set your route':routeStatus}</span></div>
           </div>
           <div className="planner-mobile-summary">

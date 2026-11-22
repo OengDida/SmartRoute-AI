@@ -290,7 +290,8 @@ input[type=number] { font-variant-numeric: tabular-nums; }
     font-size: 10px; font-weight: 700; white-space: nowrap;
   }
   .mobile-map-control:active { background: var(--surface-raised); }
-  .mobile-map-back { width: 42px; flex: 0 0 42px; }
+  .mobile-map-back { width: auto; min-width: 64px; flex: 0 0 auto; padding: 0 10px; }
+  .mobile-drawer-back { width: 42px; min-width: 42px; flex: 0 0 42px; padding: 0; }
   .mobile-map-brand {
     display: flex; min-width: 0; height: 42px; flex: 1 1 auto; align-items: center; gap: 6px;
     overflow: hidden; border: 1px solid var(--border); border-radius: 12px; background: var(--surface);
@@ -352,7 +353,7 @@ input[type=number] { font-variant-numeric: tabular-nums; }
   .planner-mobile-content::-webkit-scrollbar { display: none; }
   .planner-mobile-peek { display: block; overflow: hidden; border-top: 1px solid var(--border); padding: 8px 1px 0; }
   .mobile-route-drawer-tab {
-    position: absolute; z-index: 2; top: calc(env(safe-area-inset-top, 0px) + 88px); left: calc(100% - 1px);
+    position: absolute; z-index: 2; top: calc(env(safe-area-inset-top, 0px) + 66px); left: calc(100% - 1px);
     display: flex; min-width: 40px; min-height: 48px; align-items: center; justify-content: center;
     border: 1px solid var(--border); border-left: 0; border-radius: 0 12px 12px 0;
     background: var(--surface); color: var(--accent-text);
