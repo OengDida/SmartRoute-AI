@@ -286,11 +286,13 @@ function Welcome({onStart,onRoute,theme,onToggleTheme}){return <main className="
 function LocationGate({onSuccess,onBack,theme,onToggleTheme}) {
   const [loading,setLoading]=useState(false)
   const [error,setError]=useState('')
+  const [checkingPermission,setCheckingPermission]=useState(Boolean(navigator.permissions?.query))
+  const [bypassGate,setBypassGate]=useState(false)
   const requestRef=useRef(null)
   const requestIdRef=useRef(0)
 
   const requestLocation=()=>{
-    if(!navigator.geolocation){setLoading(false);setError('unsupported');return}
+    if(!navigator.geolocation){setLoading(false);setBypassGate(false);setError('unsupported');return}
     const requestId=++requestIdRef.current
     setLoading(true);setError('')
     try{
@@ -303,28 +305,32 @@ function LocationGate({onSuccess,onBack,theme,onToggleTheme}) {
         onSuccess({lat,lng,accuracy:Number.isFinite(accuracy)?Math.max(0,accuracy):0})
       },err=>{
         if(requestId!==requestIdRef.current)return
-        setLoading(false)
+        setLoading(false);setBypassGate(false)
         setError(err?.code===1?'denied':err?.code===2?'unavailable':err?.code===3?'timeout':'unavailable')
       },{enableHighAccuracy:true,timeout:20000,maximumAge:0})
     }catch{
       if(requestId!==requestIdRef.current)return
-      setLoading(false);setError('unavailable')
+      setLoading(false);setBypassGate(false);setError('unavailable')
     }
   }
   requestRef.current=requestLocation
 
   useEffect(()=>{
     let active=true
-    if(!navigator.geolocation){setError('unsupported');return()=>{active=false}}
-    if(navigator.permissions?.query){
-      navigator.permissions.query({name:'geolocation'}).then(permission=>{
-        if(!active)return
-        if(permission.state==='granted')requestRef.current?.()
-        else if(permission.state==='denied')setError('denied')
-      }).catch(()=>{})
-    }
+    if(!navigator.geolocation){setCheckingPermission(false);setError('unsupported');return()=>{active=false}}
+    if(!navigator.permissions?.query){setCheckingPermission(false);return()=>{active=false}}
+    navigator.permissions.query({name:'geolocation'}).then(permission=>{
+      if(!active)return
+      setCheckingPermission(false)
+      if(permission.state==='granted'){
+        setBypassGate(true)
+        requestRef.current?.()
+      }else if(permission.state==='denied')setError('denied')
+    }).catch(()=>{if(active)setCheckingPermission(false)})
     return()=>{active=false;requestIdRef.current++}
   },[])
+
+  if(checkingPermission||bypassGate)return <main className="location-screen grid min-h-[100dvh] place-items-center px-5 text-center"><div className="text-sm text-slate-400"><LocateFixed size={20} className="mx-auto mb-3 animate-pulse text-emeraldx"/>{checkingPermission?'Checking location access…':'Finding your location…'}</div></main>
 
   const errorCopy={
     denied:{
