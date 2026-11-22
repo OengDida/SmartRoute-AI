@@ -8,6 +8,8 @@ import { defaultRates } from './data/rates'
 import { fmt, haversine, money, nearestOnRoute } from './utils'
 
 const cx=(...x)=>x.filter(Boolean).join(' ')
+// OSRM returns car-profile times with no traffic; scale by vehicle type for realistic estimates
+const timeFactor={ev:1.15,hybrid:1.15,gasoline:1.15,diesel:1.25,motorbike:1.4}
 const fmtTime=m=>`${Math.floor(m/60)}h ${Math.round(m%60)}m`
 const categoryIcons={ev:Zap,hybrid:Leaf,gasoline:CarFront,diesel:Truck,motorbike:Bike}
 const kmLine=(a,b)=>haversine(a,b)
@@ -112,7 +114,7 @@ function TripPlanner({config,onChangeVehicle}) {
   const [destination,setDestination]=useState(null)
   const [route,setRoute]=useState([])
   const [distance,setDistance]=useState(0)
-  const [duration,setDuration]=useState(0)
+  const [baseDuration,setDuration]=useState(0)
   const [routeStatus,setRouteStatus]=useState('Choose an origin and destination')
   const [filter,setFilter]=useState('all')
   const [rates,setRates]=useState(defaultRates)
@@ -130,6 +132,7 @@ function TripPlanner({config,onChangeVehicle}) {
   const vehicleName=config.modified?(config.customName||'Custom vehicle'):(vehicleGroups.find(g=>g.id===config.category)?.items.find(v=>v.id===config.model)?.name||'Vehicle')
   const isEV=config.energy==='electric'
   const consumption=config.consumption||1
+  const duration=baseDuration*(timeFactor[config.category]||1.15)
   const currentRange=config.capacity*(config.level/100)/(consumption/100)
   const rangePoint=useMemo(()=>{
     if(!route.length||distance<=currentRange)return null
