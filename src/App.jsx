@@ -755,14 +755,24 @@ export default function App(){
   }
   useEffect(()=>{document.querySelector('meta[name="theme-color"]')?.setAttribute('content',theme==='dark'?'#1D2429':'#F4F6F4')},[theme])
   const [config,setConfig]=useState(defaultVehicleConfig)
-  const [tripConfig,setTripConfig]=useState(defaultVehicleConfig)
+  const [tripConfig,setTripConfig]=useState(()=>{
+    try{return JSON.parse(sessionStorage.getItem('smartroute-vehicle-config')||'null')||defaultVehicleConfig}catch{return defaultVehicleConfig}
+  })
   // Coordinates are deliberately session-only: a stored fix must never bypass
   // the mandatory permission gate on a fresh visit to the map.
   const [initialLocation,setInitialLocation]=useState(null)
   const hasTripConfig=tripConfig.capacity>0&&tripConfig.consumption>0
   const [gateBackStep,setGateBackStep]=useState(0)
+  const locationCheckRef=useRef(false)
+  const clearTripLocations=()=>{
+    try{
+      const saved=JSON.parse(sessionStorage.getItem('smartroute-trip')||'{}')
+      sessionStorage.setItem('smartroute-trip',JSON.stringify({...saved,origin:null,destination:null,originName:'',destinationName:'',route:[],distance:0,duration:0}))
+    }catch{}
+  }
   const setStep=next=>{
     const target=paths[next]
+    if(next===1&&step===3)clearTripLocations()
     if(step===1&&next!==1){
       setTripConfig(config)
       setConfig(defaultVehicleConfig)
@@ -777,6 +787,7 @@ export default function App(){
     if(!known)window.history.replaceState({step:0},'','/')
     const onPop=()=>{
       const next=stepFromPath()
+      if(next===1&&step===3)clearTripLocations()
       if(step===1&&next!==1){setTripConfig(config);setConfig(defaultVehicleConfig)}
       setStepState(next)
     }
@@ -784,20 +795,47 @@ export default function App(){
     return ()=>window.removeEventListener('popstate',onPop)
   },[step,config])
   useEffect(()=>{
-    // A direct /route visit must pass through location before the map can render.
-    if(step!==3)return
-    if(!initialLocation){
-      setGateBackStep(hasTripConfig?1:0)
-      if(window.location.pathname!=='/location')window.history.replaceState({step:2},'','/location')
-      setStepState(2)
-    }else if(!hasTripConfig){
+    if(step!==3||initialLocation)return
+    if(!hasTripConfig){
       if(window.location.pathname!=='/vehicle')window.history.replaceState({step:1},'','/vehicle')
       setStepState(1)
     }
   },[step,initialLocation,hasTripConfig])
   useEffect(()=>{
+    try{sessionStorage.setItem('smartroute-vehicle-config',JSON.stringify(tripConfig))}catch{}
+  },[tripConfig])
+  useEffect(()=>{
+    if(step!==3||initialLocation||locationCheckRef.current)return
+    locationCheckRef.current=true
+    let active=true
+    const showLocationGate=()=>{
+      if(!active)return
+      locationCheckRef.current=false
+      setGateBackStep(1)
+      if(window.location.pathname!=='/location')window.history.replaceState({step:2},'','/location')
+      setStepState(2)
+    }
+    const getLocation=()=>{
+      if(!navigator.geolocation){showLocationGate();return}
+      navigator.geolocation.getCurrentPosition(position=>{
+        if(!active)return
+        const {latitude:lat,longitude:lng,accuracy}=position.coords||{}
+        if(Number.isFinite(lat)&&Number.isFinite(lng))setInitialLocation({lat,lng,accuracy:Number.isFinite(accuracy)?Math.max(0,accuracy):0})
+      },error=>{
+        if(error?.code===1)showLocationGate()
+      },{enableHighAccuracy:true,timeout:20000,maximumAge:60000})
+    }
+    if(!navigator.permissions?.query){showLocationGate()}
+    else navigator.permissions.query({name:'geolocation'}).then(permission=>{
+      if(!active)return
+      if(permission.state==='granted')getLocation()
+      else showLocationGate()
+    }).catch(showLocationGate)
+    return()=>{active=false;locationCheckRef.current=false}
+  },[step,initialLocation])
+  useEffect(()=>{
     const titles=['SmartRoute AI — Cambodia Trip Planner','Vehicle profile · SmartRoute AI','Location access · SmartRoute AI','Map & Route · SmartRoute AI']
-    const visibleStep=step===3&&!initialLocation?2:step
+    const visibleStep=step
     document.title=titles[visibleStep]||titles[0]
   },[step,initialLocation])
 
@@ -808,17 +846,14 @@ export default function App(){
     setStep(2)
   }
   const startSmartRoute=()=>{
-    // Starting a new SmartRoute session always verifies location again, even
-    // when this tab has coordinates from an earlier trip.
     setInitialLocation(null)
+    setTripConfig(defaultVehicleConfig)
+    try{sessionStorage.removeItem('smartroute-vehicle-config')}catch{}
     setGateBackStep(0)
     setStep(1)
   }
   const continueToMap=()=>{
-    // Reuse the fresh fix from the gate after vehicle setup; do not ask again.
-    if(initialLocation){setStep(3);return}
-    setGateBackStep(1)
-    setStep(2)
+    setStep(3)
   }
   const finishLocation=location=>{
     setInitialLocation(location)
@@ -826,7 +861,7 @@ export default function App(){
     // The exact fix is handed to TripPlanner/MapView for the blue dot and center.
     setStep(hasTripConfig?3:1)
   }
-  const visibleStep=step===3&&!initialLocation?2:step
+  const visibleStep=step
   useEffect(()=>{
     const routeMode=visibleStep===3
     const routeRoots=[document.documentElement,document.body,document.getElementById('root')]
