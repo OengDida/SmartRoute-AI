@@ -252,11 +252,26 @@ input[type=number] { font-variant-numeric: tabular-nums; }
 .mobile-map-header, .planner-mobile-sheet-header { display: none; }
 .left-panel-hidden { display: none; }
 @media (max-width: 767px) {
+  html.route-fullscreen,
+  body.route-fullscreen,
+  #root.route-fullscreen {
+    height: 100vh;
+    height: 100dvh;
+    min-height: 100vh;
+    min-height: 100dvh;
+    overflow: hidden;
+    overscroll-behavior: none;
+  }
+  html.route-fullscreen,
+  body.route-fullscreen,
+  #root.route-fullscreen { background: var(--canvas); }
+  #root.route-fullscreen { padding: 0; }
+
   /* Use the dynamic viewport so no stale browser-toolbar-sized band remains. */
   .planner-screen {
     position: fixed; inset: 0; width: 100vw;
     height: 100vh; min-height: 100vh; height: 100dvh; min-height: 100dvh;
-    background: transparent !important;
+    background: var(--canvas) !important;
   }
   .planner-header { display: none; }
   .mobile-map-header {

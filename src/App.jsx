@@ -803,6 +803,12 @@ export default function App(){
     setStep(hasTripConfig?3:1)
   }
   const visibleStep=step===3&&!initialLocation?2:step
+  useEffect(()=>{
+    const routeMode=visibleStep===3
+    const routeRoots=[document.documentElement,document.body,document.getElementById('root')]
+      .filter(Boolean)
+    routeRoots.forEach(element=>element.classList.toggle('route-fullscreen',routeMode))
+  },[visibleStep])
   return visibleStep===0
     ?<Welcome onStart={startSmartRoute} onRoute={()=>goToMap(0)} theme={theme} onToggleTheme={toggleTheme}/>
     :visibleStep===1
