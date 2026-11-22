@@ -1,15 +1,17 @@
 // Fuel prices reflect the Cambodia Ministry of Commerce schedule effective 11–21 Nov 2026.
-// Pure EVs use the DC tariff; PHEVs use the AC/grid tariff. Both are editable in-app.
+// Charging prices supplied by the user; each tariff can be edited in-app.
 export const defaultRates = {
   gasoline: 4350,
   diesel: 5300,
   ev: 1350,
-  phevAc: 609,
+  evSuperFast: 1450,
+  ac: 1050,
   usdToKhr: 4050,
   gasolineLabel: 'Regular gasoline (EA92)',
   dieselLabel: 'Diesel (10ppm)',
-  evLabel: 'EV DC fast charging',
-  phevAcLabel: 'PHEV AC / grid charging'
+  evLabel: 'DC fast charging (up to 250 kW)',
+  evSuperFastLabel: 'DC super-fast charging (above 250 kW)',
+  acLabel: 'AC charging'
 }
 
 export const fuelPricesApiUrl = 'https://data.mef.gov.kh/api/v1/public-datasets/pd_681d89b4dbc953000126f5e7/json?page=1&page_size=100'
