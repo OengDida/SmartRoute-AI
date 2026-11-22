@@ -122,6 +122,7 @@ export async function computeGoogleRoute(origin, destination) {
     origin: { lat: origin.lat, lng: origin.lng },
     destination: { lat: destination.lat, lng: destination.lng },
     travelMode: 'DRIVING',
+    computeAlternativeRoutes: true,
     // Match the live-traffic route and travel-time behavior people expect
     // from Google Maps, instead of returning a static/unaware duration.
     routingPreference: 'TRAFFIC_AWARE',
@@ -129,21 +130,23 @@ export async function computeGoogleRoute(origin, destination) {
     // by the time the request reaches Google. Use a small future buffer.
     departureTime: new Date(Date.now() + 60_000),
     region: 'kh',
-    fields: ['distanceMeters', 'durationMillis', 'path'],
+    fields: ['distanceMeters', 'durationMillis', 'path', 'routeLabels'],
   })
-  const route = routes[0]
-  if (!route?.path?.length || !Number.isFinite(route.distanceMeters) || !Number.isFinite(route.durationMillis)) {
+  const usableRoutes = routes.filter(route => route?.path?.length >= 2 && Number.isFinite(route.distanceMeters) && Number.isFinite(route.durationMillis))
+  if (!usableRoutes.length) {
     throw new Error('Google Routes returned no usable driving route for those places.')
   }
-  const path = route.path.map(point => [
-    typeof point.lng === 'function' ? point.lng() : point.lng,
-    typeof point.lat === 'function' ? point.lat() : point.lat,
-  ]).filter(([lng, lat]) => Number.isFinite(lng) && Number.isFinite(lat))
-  if (path.length < 2) throw new Error('Google Routes returned an incomplete route path.')
+  let alternativeNumber = 0
+  const alternatives = usableRoutes.map(route => {
+    const path = route.path.map(point => [
+      typeof point.lng === 'function' ? point.lng() : point.lng,
+      typeof point.lat === 'function' ? point.lat() : point.lat,
+    ]).filter(([lng, lat]) => Number.isFinite(lng) && Number.isFinite(lat))
+    return { path, distanceMeters: route.distanceMeters, durationMillis: route.durationMillis, label: route.routeLabels?.includes('DEFAULT_ROUTE') ? 'Recommended' : `Alternative ${++alternativeNumber}` }
+  }).filter(route => route.path.length >= 2)
+  if (!alternatives.length) throw new Error('Google Routes returned an incomplete route path.')
   return {
-    path,
-    distanceMeters: route.distanceMeters,
-    durationMillis: route.durationMillis,
+    alternatives,
     source: 'Google Routes',
   }
 }
@@ -172,7 +175,7 @@ function distanceToRouteKm(point, coordinates) {
   return closest
 }
 
-function sampleRoute(coordinates, spacingKm = 10, maxPoints = 40) {
+function sampleRoute(coordinates, spacingKm = 5, maxPoints = 80) {
   if (!coordinates?.length) return []
   if (coordinates.length === 1) return [coordinates[0]]
   const lengths = [0]
@@ -203,7 +206,7 @@ const CATEGORY_TYPES = {
   hybrid: [GAS_TYPE, EV_TYPE],
 }
 const HUB_RADIUS_KM = 0.3
-const ROUTE_CORRIDOR_KM = 0.5
+const ROUTE_CORRIDOR_KM = 0.15
 
 const kmBetween = (a, b) => distanceKm([a.lng, a.lat], [b.lng, b.lat])
 
@@ -228,6 +231,8 @@ export async function searchStationsAlongRoute(routeCoordinates, category = 'all
   const { Place } = await maps.importLibrary('places')
   const samplePoints = sampleRoute(routeCoordinates)
   if (!samplePoints.length) throw new Error('Choose an origin and destination and calculate a route first.')
+  const routeLengthKm = routeCoordinates.slice(1).reduce((total, point, index) => total + distanceKm(routeCoordinates[index], point), 0)
+  const searchRadiusMeters = Math.max(3000, Math.ceil((routeLengthKm / Math.max(1, samplePoints.length - 1)) * 750))
   const found = new Map()
   let failedAreas = 0
   let firstAreaError = ''
@@ -237,9 +242,8 @@ export async function searchStationsAlongRoute(routeCoordinates, category = 'all
     const results = await Promise.allSettled(batch.map(async ([lng, lat]) => {
       const { places = [] } = await Place.searchNearby({
         includedTypes,
-        locationRestriction: { center: { lat, lng }, radius: 10000 },
+        locationRestriction: { center: { lat, lng }, radius: searchRadiusMeters },
         rankPreference: 'DISTANCE', maxResultCount: 20,
-        fields: ['id', 'displayName', 'location', 'formattedAddress', 'businessStatus', 'googleMapsURI', 'types', 'primaryType', 'svgIconMaskURI'],
         fields: ['id', 'displayName', 'location', 'formattedAddress', 'businessStatus', 'googleMapsURI', 'types', 'primaryType'],
         language: 'en', region: 'kh',
       })
