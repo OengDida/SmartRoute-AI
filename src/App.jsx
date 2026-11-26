@@ -564,7 +564,9 @@ function TripPlanner({config,onChangeVehicle,initialLocation,theme,onToggleTheme
   const save=Math.abs(gasCost-evCost)
   const lowRange=hasGoogleRoute&&distance>currentRange
   const routePoints=route.length?route:[]
-  const calculate=async(a=origin,b=destination)=>{
+  const [showAltRoutes,setShowAltRoutes]=useState(false)
+  const calculate=async(a=origin,b=destination,revealAlt=false)=>{
+    setShowAltRoutes(revealAlt)
     const requestId=++routeRequestRef.current
     if(!a||!b){
       setRoute([])
@@ -710,7 +712,6 @@ function TripPlanner({config,onChangeVehicle,initialLocation,theme,onToggleTheme
     <div className={cx('planner-map-layer absolute inset-0',mapClickMode&&'pick-mode')}><MapView origin={origin} destination={destination} route={routePoints} stations={googleStations??[]} filter={filter} onMapClick={handleMapClick} rangePoint={rangePoint} initialLocation={initialLocation} mapType={mapType} onMapTypeChange={setMapType}/></div>
     <BrandHeader theme={theme} onToggleTheme={onToggleTheme} className="planner-header" action={<button onClick={onChangeVehicle} aria-label="Back to vehicle profile" className="header-action"><ArrowLeft size={16}/><span>Vehicle</span></button>} rightAction={<>
       <button type="button" onClick={()=>setMapType(current=>current==='roadmap'?'hybrid':'roadmap')} aria-label={mapType==='roadmap'?'Switch to satellite map':'Switch to street map'} title={mapType==='roadmap'?'Satellite view':'Street view'} className="header-action desktop-map-layer-control"><Layers size={16}/><span>{mapType==='roadmap'?'Satellite':'Map'}</span></button>
-      <button type="button" onClick={togglePlannerFullscreen} aria-label={mapFullscreen?'Exit fullscreen map':'View map fullscreen'} title={mapFullscreen?'Exit fullscreen':'Fullscreen'} className="header-action desktop-map-fullscreen-control">{mapFullscreen?<Minimize2 size={16}/>:<Maximize2 size={16}/>}<span>{mapFullscreen?'Exit fullscreen':'Fullscreen'}</span></button>
       <button onClick={()=>setShowLeft(x=>!x)} aria-label={showLeft?'Hide menu and show map':'Show menu'} className="mobile-plan-toggle"><span className="mobile-plan-label">{showLeft?'Map':'Plan'}</span>{showLeft?<MapIcon size={16}/>:<Route size={16}/>}</button>
     </>}/>
     <header className="mobile-map-header" aria-label="Route map controls">
@@ -731,7 +732,7 @@ function TripPlanner({config,onChangeVehicle,initialLocation,theme,onToggleTheme
             <div className="planner-mobile-route-summary" title={`${origin?.name||'Choose origin'} to ${destination?.name||'Choose destination'}`}><span>{origin?.name||'Choose origin'}</span><ArrowRight size={13}/><span>{destination?.name||'Choose destination'}</span></div>
             <div className="planner-mobile-vehicle-summary"><span>{vehicleName}</span><span>· Level {config.level}%</span></div>
           </div>
-          <button type="button" onClick={()=>{calculate();setMobileDrawerOpen(false)}} disabled={!origin||!destination} className="planner-mobile-recalculate disabled:opacity-40"><Navigation size={15}/> Find alternative routes</button>
+          <button type="button" onClick={()=>{calculate(origin,destination,true);setMobileDrawerOpen(false)}} disabled={!origin||!destination} className="planner-mobile-recalculate disabled:opacity-40"><Navigation size={15}/> Find alternative routes</button>
           <div className="planner-mobile-peek">
             <div className="planner-mobile-peek-heading"><Route size={13}/><span>Trip guidance</span><b>{hasGoogleRoute?money(isHybrid?hybridFuelCost+hybridElectricCost:totalCost,rates.usdToKhr):'Trip cost estimate below'}</b></div>
             <p>{recommendation()}</p>
@@ -746,9 +747,9 @@ function TripPlanner({config,onChangeVehicle,initialLocation,theme,onToggleTheme
 
           <div className="mt-4"><GoogleTextPlaceSearch label="Destination" value={destinationName} placeholder="Search a place in Cambodia" onPick={pickDestination} action={pinButton('destination')}/></div>
           <div className="mt-3 flex items-center justify-between rounded-xl bg-black/20 p-3"><div><div className="text-[10px] uppercase text-slate-500">Vehicle</div><div className="mt-1 text-xs font-bold">{vehicleName}</div></div><div className="text-right"><div className="text-[10px] uppercase text-slate-500">Current level</div><div className="mt-1 text-sm font-black text-emeraldx">{config.level}%</div></div></div>
-          <button onClick={()=>{calculate();setMobileDrawerOpen(false)}} disabled={!origin||!destination} className="disabled:opacity-40 mt-3 flex w-full items-center justify-center gap-2 rounded-xl bg-emeraldx py-3 text-xs font-extrabold text-ink hover:bg-emerald-300"><Navigation size={15}/> Find alternative routes</button>
+          <button onClick={()=>{calculate(origin,destination,true);setMobileDrawerOpen(false)}} disabled={!origin||!destination} className="disabled:opacity-40 mt-3 flex w-full items-center justify-center gap-2 rounded-xl bg-emeraldx py-3 text-xs font-extrabold text-ink hover:bg-emerald-300"><Navigation size={15}/> Find alternative routes</button>
           <div className="mt-2 text-center text-[10px] text-slate-500">{routeStatus}</div>
-          {routeChoices.length>1&&<div className="mt-3 space-y-2" aria-label="Available routes">{routeChoices.map((choice,index)=><button type="button" key={`${choice.label}-${index}`} onClick={()=>selectRoute(index)} aria-pressed={selectedRouteIndex===index} className={cx('flex w-full items-center justify-between rounded-lg border p-3 text-left text-xs transition',selectedRouteIndex===index?'border-emeraldx/50 bg-emeraldx/10':'border-white/10 bg-black/20 hover:border-white/20')}><span><b className={selectedRouteIndex===index?'text-emeraldx':'text-slate-200'}>{choice.label}</b><span className="mt-1 block text-[10px] text-slate-500">{fmt(choice.distanceMeters/1000)} km · {fmtTime(choice.durationMillis/60000)}</span></span>{selectedRouteIndex===index&&<Check size={15} className="text-emeraldx"/>}</button>)}</div>}
+          {showAltRoutes&&routeChoices.length>1&&<div className="mt-3 space-y-2" aria-label="Available routes">{routeChoices.map((choice,index)=><button type="button" key={`${choice.label}-${index}`} onClick={()=>selectRoute(index)} aria-pressed={selectedRouteIndex===index} className={cx('flex w-full items-center justify-between rounded-lg border p-3 text-left text-xs transition',selectedRouteIndex===index?'border-emeraldx/50 bg-emeraldx/10':'border-white/10 bg-black/20 hover:border-white/20')}><span><b className={selectedRouteIndex===index?'text-emeraldx':'text-slate-200'}>{choice.label}</b><span className="mt-1 block text-[10px] text-slate-500">{fmt(choice.distanceMeters/1000)} km · {fmtTime(choice.durationMillis/60000)}</span></span>{selectedRouteIndex===index&&<Check size={15} className="text-emeraldx"/>}</button>)}</div>}
         </Panel>
         <Panel className="p-4">
           <div className="mb-3 flex items-center gap-2"><Route size={16} className="text-emeraldx"/><div className="text-sm font-extrabold">Trip guidance</div><span className="ml-auto rounded-full bg-emeraldx/10 px-2 py-1 text-[9px] font-bold text-emeraldx">RULE-BASED</span></div>
@@ -778,7 +779,7 @@ function TripPlanner({config,onChangeVehicle,initialLocation,theme,onToggleTheme
     <button onClick={()=>setShowLeft(x=>!x)} aria-label={showLeft?'Hide left menu':'Show left menu'} title={showLeft?'Hide menu':'Show menu'} style={{left:showLeft?'min(404px, calc(100vw - 44px))':'4px'}} className="absolute top-[84px] z-[600] hidden h-10 w-8 items-center justify-center rounded-xl border border-white/10 bg-ink/90 text-slate-300 shadow-xl backdrop-blur transition-all hover:border-emeraldx/50 hover:text-emeraldx lg:flex">{showLeft?<ChevronLeft size={18}/>:<ChevronRight size={18}/>}</button>
     <button onClick={()=>setShowRight(x=>!x)} aria-label={showRight?'Hide right menu':'Show right menu'} title={showRight?'Hide menu':'Show menu'} style={{right:showRight?'304px':'4px'}} className="absolute top-[84px] z-[600] hidden h-10 w-8 items-center justify-center rounded-xl border border-white/10 bg-ink/90 text-slate-300 shadow-xl backdrop-blur transition-all hover:border-emeraldx/50 hover:text-emeraldx lg:flex">{showRight?<ChevronRight size={18}/>:<ChevronLeft size={18}/>}</button>
     {mapClickMode&&<div className="mobile-map-notice absolute left-1/2 top-[76px] z-[600] flex -translate-x-1/2 items-center gap-3 whitespace-nowrap rounded-xl border border-emeraldx/40 bg-ink/95 px-4 py-2.5 text-xs font-bold shadow-xl backdrop-blur"><MapPin size={15} className="text-emeraldx"/>Tap the map to set {mapClickMode}<button onClick={()=>togglePin(mapClickMode)} className="text-slate-400 hover:text-white">Cancel</button></div>}
-    {routeError&&<div role="status" className="mobile-map-notice absolute left-2 right-2 top-[76px] z-[600] max-w-xs lg:left-auto lg:bottom-4 lg:right-4 lg:top-auto rounded-xl border border-amberx/30 bg-ink/95 p-3 text-[10px] leading-4 text-amberx shadow-xl">{routeError}</div>}
+    {routeError&&<div role="status" className="mobile-map-notice absolute left-2 right-2 top-[76px] z-[600] max-w-xs lg:left-auto lg:bottom-4 lg:right-[68px] lg:top-auto rounded-xl border border-amberx/30 bg-ink/95 p-3 text-[10px] leading-4 text-amberx shadow-xl">{routeError}</div>}
   </div>
 }
 const paths=['/','/vehicle','/location','/route']

@@ -48,14 +48,19 @@
 
   /* Header: chips floating on the map, to the right of the sheet */
   .planner-screen .planner-header { top: 12px; left: 436px; right: 12px; }
-  .planner-screen:has(.left-panel-hidden) .planner-header { left: 56px; }
+  .planner-screen:has(.left-panel-hidden) .planner-header { left: 12px; }
   .planner-screen .planner-header .header-action,
-  .planner-screen .planner-header .theme-toggle,
-  .planner-screen .planner-header .brand-lockup {
+  .planner-screen .planner-header .theme-toggle {
     height: 36px; padding-block: 0; border: 0; border-radius: 18px;
     background: var(--surface); box-shadow: var(--gm-chip-shadow);
   }
-  .planner-screen .planner-header .brand-lockup { padding-inline: 12px; }
+  .planner-screen .planner-header .brand-lockup {
+    position: fixed; bottom: 12px; left: 50%; transform: translateX(-50%);
+    height: auto; padding: 0; border: 0; border-radius: 0;
+    background: transparent; box-shadow: none; pointer-events: none;
+  }
+  .planner-screen .planner-header .brand-name { color: #202a2e; }
+  .planner-screen .planner-header .brand-name span { color: #08724f; }
   .planner-screen .planner-header .brand-caption { display: none; }
   .planner-screen .planner-header .brand-mark { width: 22px; height: 22px; }
 
