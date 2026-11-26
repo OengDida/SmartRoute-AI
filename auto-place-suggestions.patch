@@ -1,0 +1,35 @@
+--- a/src/App.jsx	2026-11-26 16:02:03.775450308 +0000
++++ b/src/App.jsx	2026-11-26 16:02:09.367332864 +0000
+@@ -211,6 +211,23 @@
+       setStatus('error')
+     }
+   }
++  // Live suggestions: query Google Places shortly after the person stops typing.
++  useEffect(()=>{
++    if(!open||term.length<2||searched===term)return
++    let cancelled=false
++    setStatus('loading')
++    const timer=setTimeout(async()=>{
++      try{
++        const data=await searchGooglePlaces(term)
++        if(cancelled)return
++        setFound(data);setSearchError('');setSearched(term);setStatus('done')
++      }catch(error){
++        if(cancelled)return
++        setSearchError(googleMapsErrorMessage(error,'Google Places'));setStatus('error')
++      }
++    },400)
++    return ()=>{cancelled=true;clearTimeout(timer)}
++  },[term,open])
+   const pick=place=>{
+     onPick(place)
+     setOpen(false)
+@@ -231,7 +248,7 @@
+       {action}
+     </div>
+     {open&&(term.length>=2||status==='error')&&<div onMouseDown={event=>event.preventDefault()} className="max-h-56 overflow-y-auto rounded-xl border border-white/10 bg-black/30 p-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+-      {term.length>=2&&!showFound&&<button type="button" onClick={search} disabled={status==='loading'} className={cx(item,'font-bold text-emeraldx')}>{status==='loading'?'Searching…':`Search all places for “${term}”`}</button>}
++      {term.length>=2&&status==='loading'&&<div className="px-3 py-3 text-[11px] text-slate-400">Searching Google Maps…</div>}
+       {showFound&&found.length>0&&<div className="px-3 pb-1 pt-2 text-[10px] font-bold uppercase tracking-wider text-slate-500">Google Maps places in Cambodia</div>}
+       {showFound&&found.map((place,index)=><button type="button" key={place.placeId||`${place.lat}:${place.lng}:${index}`} onClick={()=>pick(place)} className={item}><div className="font-semibold">{place.name}</div><div className="mt-0.5 truncate text-[10px] text-slate-500">{place.detail}</div></button>)}
+       {showFound&&!found.length&&<div className="px-3 py-3 text-[11px] text-slate-400">No places found. Try a different spelling or a nearby town.</div>}
