@@ -260,14 +260,17 @@ const repo='https://github.com/OengDida/SmartRoute-AI'
 function FooterCol({title,children}){return <div><div className="mb-2 text-sm font-bold text-white">{title}</div><ul className="space-y-0.5">{children}</ul></div>}
 function FLink({href,onClick,external,children}){return <li><a href={href} onClick={onClick?e=>{e.preventDefault();onClick()}:undefined} {...(external?{target:'_blank',rel:'noopener noreferrer'}:{})} className="text-sm leading-6 text-slate-400 transition hover:text-emeraldx">{children}</a></li>}
 function FText({children}){return <li className="text-sm leading-6 text-slate-500">{children}</li>}
-function BrandHeader({theme,onToggleTheme,action,rightAction,className=''}){
+function BrandHeader({theme,onToggleTheme,onHome,action,rightAction,className=''}){
   const nextTheme=theme==='light'?'dark':'light'
   return <header className={cx('app-header',className)}>
     {action}
-    <div className="brand-lockup">
+    {onHome?<button type="button" onClick={onHome} className="brand-lockup text-left" aria-label="Return to SmartRoute AI home">
       <img src="/favicon.svg" alt="" className="brand-mark"/>
       <div><div className="brand-name">SmartRoute <span>AI</span></div><div className="brand-caption">Cambodia trip planner</div></div>
-    </div>
+    </button>:<div className="brand-lockup">
+      <img src="/favicon.svg" alt="" className="brand-mark"/>
+      <div><div className="brand-name">SmartRoute <span>AI</span></div><div className="brand-caption">Cambodia trip planner</div></div>
+    </div>}
     <div className="header-spacer"/>
     {rightAction}
     <button type="button" onClick={onToggleTheme} className="theme-toggle" aria-label={`Switch to ${nextTheme} mode`} aria-pressed={theme==='dark'} title={`Switch to ${nextTheme} mode`}>
@@ -450,7 +453,7 @@ const loadTripSnapshot=()=>{
     }
   }catch{return null}
 }
-function TripPlanner({config,onChangeVehicle,initialLocation,theme,onToggleTheme}) {
+function TripPlanner({config,onChangeVehicle,onHome,initialLocation,theme,onToggleTheme}) {
   const [savedTrip]=useState(loadTripSnapshot)
   const [mobileDrawerOpen,setMobileDrawerOpen]=useState(false)
   const [mapType,setMapType]=useState('roadmap')
@@ -710,7 +713,7 @@ function TripPlanner({config,onChangeVehicle,initialLocation,theme,onToggleTheme
         <div className="rounded-xl border border-white/10 bg-ink/85 p-3 text-[10px] leading-4 text-slate-400 backdrop-blur"><Info size={13} className="mb-1 text-amberx"/> Blue line, distance, and drive time come from Google Routes (traffic-aware when available). If Google cannot calculate a route, no substitute route or ETA is shown. Use “Pin (choose on map)” to set a custom waypoint.</div></>
   return <div ref={plannerScreenRef} className="planner-screen relative h-[100dvh] min-h-[480px] w-full overflow-hidden bg-slate-950 text-white lg:min-h-[720px]">
     <div className={cx('planner-map-layer absolute inset-0',mapClickMode&&'pick-mode')}><MapView origin={origin} destination={destination} route={routePoints} stations={googleStations??[]} filter={filter} onMapClick={handleMapClick} rangePoint={rangePoint} initialLocation={initialLocation} mapType={mapType} onMapTypeChange={setMapType}/></div>
-    <BrandHeader theme={theme} onToggleTheme={onToggleTheme} className="planner-header" action={<button onClick={onChangeVehicle} aria-label="Back to vehicle profile" className="header-action"><ArrowLeft size={16}/><span>Vehicle</span></button>} rightAction={<>
+    <BrandHeader theme={theme} onToggleTheme={onToggleTheme} onHome={onHome} className="planner-header" action={<button onClick={onChangeVehicle} aria-label="Back to vehicle profile" className="header-action"><ArrowLeft size={16}/><span>Vehicle</span></button>} rightAction={<>
       <button type="button" onClick={()=>setMapType(current=>current==='roadmap'?'hybrid':'roadmap')} aria-label={mapType==='roadmap'?'Switch to satellite map':'Switch to street map'} title={mapType==='roadmap'?'Satellite view':'Street view'} className="header-action desktop-map-layer-control"><Layers size={16}/><span>{mapType==='roadmap'?'Satellite':'Map'}</span></button>
       <button onClick={()=>setShowLeft(x=>!x)} aria-label={showLeft?'Hide menu and show map':'Show menu'} className="mobile-plan-toggle"><span className="mobile-plan-label">{showLeft?'Map':'Plan'}</span>{showLeft?<MapIcon size={16}/>:<Route size={16}/>}</button>
     </>}/>
@@ -907,5 +910,5 @@ export default function App(){
       ?<Setup onBack={()=>setStep(0)} onGenerate={continueToMap} config={config} setConfig={setConfig} theme={theme} onToggleTheme={toggleTheme}/>
       :visibleStep===2
         ?<LocationGate onSuccess={finishLocation} onBack={()=>setStep(gateBackStep)} theme={theme} onToggleTheme={toggleTheme}/>
-        :<TripPlanner config={tripConfig} initialLocation={initialLocation} onChangeVehicle={()=>setStep(1)} theme={theme} onToggleTheme={toggleTheme}/>
+        :<TripPlanner config={tripConfig} initialLocation={initialLocation} onChangeVehicle={()=>setStep(1)} onHome={()=>setStep(0)} theme={theme} onToggleTheme={toggleTheme}/>
 }
