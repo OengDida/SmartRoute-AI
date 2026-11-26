@@ -380,9 +380,9 @@ function LocationGate({onSuccess,onBack,theme,onToggleTheme}) {
     },
   }[error]
 
-  return <main className="location-screen min-h-[100dvh] px-5 py-4 sm:px-8">
-    <div className="mx-auto flex min-h-[calc(100dvh-2rem)] max-w-6xl flex-col">
-    <BrandHeader theme={theme} onToggleTheme={onToggleTheme} className="py-3"/>
+  return <main className="location-screen min-h-[100dvh] px-5 pb-4 sm:px-8">
+    <div className="mx-auto flex min-h-[calc(100dvh-1rem)] max-w-6xl flex-col">
+    <BrandHeader theme={theme} onToggleTheme={onToggleTheme} className="py-6"/>
     <section className="grid flex-1 place-items-center py-8">
     <div className="relative w-full max-w-lg">
       <Panel className="p-6 text-center shadow-2xl sm:p-9">
@@ -421,8 +421,8 @@ function Setup({onBack,onGenerate,config,setConfig,theme,onToggleTheme}) {
   const set=(key,value)=>setConfig(p=>({...p,[key]:value}))
   useEffect(()=>{if(!config.modified&&selected)setConfig(p=>({...p,energy:selected.energy,capacity:selected.capacity,consumption:selected.consumption,model:selected.id}))},[config.category,config.model,config.modified])
   const Icon=categoryIcons[config.category]||CarFront
-  return <div className="vehicle-screen min-h-screen px-4 py-5 sm:px-8"><div className="mx-auto max-w-6xl">
-    <BrandHeader theme={theme} onToggleTheme={onToggleTheme} className="mb-5 py-2"/>
+  return <div className="vehicle-screen min-h-screen px-5 pb-5 sm:px-8"><div className="mx-auto max-w-6xl">
+    <BrandHeader theme={theme} onToggleTheme={onToggleTheme} className="mb-1 py-6"/>
     <button onClick={onBack} className="back-link mb-5 flex items-center gap-2 text-sm text-slate-400 hover:text-white"><ArrowLeft size={16}/> Back</button>
     <div className="mb-8"><div className="text-xs font-bold uppercase tracking-[.2em] text-emeraldx">Step 02 / Vehicle profile</div><h1 className="mt-2 text-3xl font-black sm:text-4xl">What are you driving?</h1><p className="mt-2 text-slate-400">We'll use your vehicle's real-world efficiency to estimate range and trip costs.</p></div>
     <div className="grid gap-6 lg:grid-cols-[1.2fr_.8fr]">

@@ -150,7 +150,7 @@ input[type=number] { font-variant-numeric: tabular-nums; }
 .pick-mode .google-map { cursor: crosshair; }
 
 .app-header { display: flex; align-items: center; gap: 12px; min-height: 48px; }
-.brand-lockup { display: flex; align-items: center; gap: 10px; min-width: 0; user-select: none; }
+.brand-lockup { display: flex; align-items: center; gap: 10px; min-width: 0; border: 0; background: transparent; padding: 0; text-align: left; user-select: none; }
 .brand-mark { width: 34px; height: 34px; object-fit: contain; }
 .brand-name { color: var(--text-primary); font-size: 17px; font-weight: 760; letter-spacing: -.025em; white-space: nowrap; }
 .brand-name span { color: var(--accent-text); }
