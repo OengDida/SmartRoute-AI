@@ -1,0 +1,85 @@
+/* Google Maps-style layout for the /route screen (desktop, >=1024px).
+   Pure CSS override: one floating left sheet, no right column, chip-style header.
+   Delete this file and its import in main.jsx to revert. */
+@media (min-width: 1024px) {
+  .planner-screen {
+    --gm-shadow: 0 1px 3px rgba(60, 64, 67, .3), 0 4px 8px 3px rgba(60, 64, 67, .15);
+    --gm-chip-shadow: 0 1px 4px rgba(0, 0, 0, .3);
+  }
+
+  /* Layout: left sheet fills the height, right column folds into it */
+  .planner-screen .planner-controls-layer { top: 12px; bottom: 12px; left: 12px; right: 12px; align-items: stretch; }
+  .planner-screen .planner-controls-layer > div:last-child { display: none !important; }
+  .planner-screen [aria-label$="right menu"] { display: none !important; }
+
+  /* The left sheet: one white surface like Google's side panel */
+  .planner-screen #mobile-route-drawer {
+    max-width: 408px; height: 100%;
+    background: var(--surface); color: var(--text-primary);
+    border-radius: 12px; box-shadow: var(--gm-shadow);
+    will-change: transform;
+    transition: transform .38s cubic-bezier(.22, 1, .36, 1);
+  }
+  .planner-screen #mobile-route-drawer.left-panel-hidden {
+    display: block;
+    transform: translateX(calc(-100% - 24px));
+    pointer-events: none;
+  }
+  .planner-screen #mobile-route-drawer .planner-mobile-content { gap: 0; }
+  /* show the panels that normally live in the right column */
+  .planner-screen #mobile-route-drawer [class~="lg:hidden"] { display: flex !important; flex-direction: column; gap: 0; }
+
+  /* Cards become flat sections separated by hairlines */
+  .planner-screen #mobile-route-drawer .glass {
+    background: transparent !important; backdrop-filter: none !important;
+    border: 0 !important; border-bottom: 1px solid var(--border) !important;
+    border-radius: 0 !important; box-shadow: none !important;
+  }
+  .planner-screen #mobile-route-drawer [class~="lg:hidden"] > div:not(.glass) {
+    background: transparent !important; border: 0 !important; border-radius: 0 !important; backdrop-filter: none !important;
+  }
+  .planner-screen #mobile-route-drawer [class~="bg-black/20"] {
+    background: var(--surface-subtle) !important; border: 1px solid var(--border); border-radius: 8px !important;
+  }
+
+  /* Inputs & buttons: Google proportions */
+  .planner-screen #mobile-route-drawer .field,
+  .planner-screen #mobile-route-drawer .google-place-autocomplete { border-radius: 8px; min-height: 40px; }
+  .planner-screen #mobile-route-drawer button[class*="bg-emeraldx"][class*="rounded-xl"] { border-radius: 20px; }
+  .planner-screen #mobile-route-drawer [aria-label="Available routes"] { margin-inline: -16px; }
+  .planner-screen #mobile-route-drawer [aria-label="Available routes"] button {
+    border: 0 !important; border-top: 1px solid var(--border) !important; border-radius: 0 !important;
+    background: transparent !important; padding: 12px 16px;
+  }
+  .planner-screen #mobile-route-drawer [aria-label="Available routes"] button[aria-pressed="true"] { background: rgba(32, 214, 154, .12) !important; }
+
+  /* Header: chips floating on the map, to the right of the sheet */
+  .planner-screen .planner-header { top: 12px; left: 436px; right: 12px; will-change: left; transition: left .38s cubic-bezier(.22, 1, .36, 1); }
+  .planner-screen:has(.left-panel-hidden) .planner-header { left: 12px; }
+  .planner-screen .planner-header .header-action,
+  .planner-screen .planner-header .theme-toggle {
+    height: 36px; padding-block: 0; border: 0; border-radius: 18px;
+    background: var(--surface); box-shadow: var(--gm-chip-shadow);
+  }
+  .planner-screen .planner-header .brand-lockup {
+    position: fixed; bottom: 12px; left: 50%; transform: translateX(-50%);
+    height: auto; padding: 0; border: 0; border-radius: 0;
+    background: transparent; box-shadow: none; pointer-events: none;
+  }
+  .planner-screen .planner-header .brand-name { color: #202a2e; }
+  .planner-screen .planner-header .brand-name span { color: #08724f; }
+  .planner-screen .planner-header .brand-caption { display: none; }
+  .planner-screen .planner-header .brand-mark { width: 22px; height: 22px; }
+
+  /* Collapse tab sits on the sheet's edge, vertically centered */
+  .planner-screen [aria-label="Hide left menu"] {
+    left: 420px !important; top: 50% !important; transform: translateY(-50%);
+    width: 20px; height: 48px; border: 0; border-radius: 0 8px 8px 0;
+    box-shadow: var(--gm-chip-shadow);
+  }
+  .planner-screen [aria-label="Hide left menu"],
+  .planner-screen [aria-label="Show left menu"] {
+    transition: left .38s cubic-bezier(.22, 1, .36, 1), background-color .15s ease, border-color .15s ease, color .15s ease;
+  }
+  .planner-screen [aria-label="Show left menu"] { top: 50%; transform: translateY(-50%); }
+}
