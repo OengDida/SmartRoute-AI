@@ -467,9 +467,9 @@ function TripPlanner({config,onChangeVehicle,initialLocation,theme,onToggleTheme
     const result=document.fullscreenElement===screen?document.exitFullscreen?.():screen.requestFullscreen?.()
     result?.catch?.(()=>{})
   }
-  const [originName,setOriginName]=useState(()=>savedTrip?.originName||(initialLocation?'Current location':''))
+  const [originName,setOriginName]=useState(()=>savedTrip?.originName||'')
   const [destinationName,setDestinationName]=useState(()=>savedTrip?.destinationName||'')
-  const [origin,setOrigin]=useState(()=>savedTrip?.origin||(initialLocation?{lat:initialLocation.lat,lng:initialLocation.lng,name:'Current location',isCurrentLocation:true}:null))
+  const [origin,setOrigin]=useState(()=>savedTrip?.origin||null)
   const [destination,setDestination]=useState(()=>savedTrip?.destination||null)
   const [route,setRoute]=useState(()=>savedTrip?.route||[])
   const [routeChoices,setRouteChoices]=useState(()=>Array.isArray(savedTrip?.routeChoices)?savedTrip.routeChoices:[])
@@ -703,9 +703,9 @@ function TripPlanner({config,onChangeVehicle,initialLocation,theme,onToggleTheme
           {showStations&&<div className="mt-3 max-h-64 space-y-2 overflow-y-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">{googleStations===null?alongStations.filter(s=>matchesFilter(s,filter)).map(s=><div key={s.id} className="rounded-lg bg-black/20 p-3"><div className="flex justify-between gap-2"><b className="text-[11px]">{s.name}</b><span className="text-[9px] text-emeraldx">{s.road}</span></div><div className="mt-1 text-[10px] text-slate-500">{s.brand} · {s.hours} · {s.connectors.join(', ')||'Fuel'}</div></div>)
 :googleStations.filter(s=>matchesFilter(s,filter)).map(s=><div key={s.id} className="rounded-lg bg-black/20 p-3"><div className="flex justify-between gap-2"><b className="text-[11px]">{s.name}</b><span className={cx('text-[9px] font-bold',typeBadge[s.type]?.[1])}>{typeBadge[s.type]?.[0]}</span>{s.status==='CLOSED_PERMANENTLY'&&<span className="text-[9px] text-rose-300">Permanently closed</span>}</div><div className="mt-1 text-[10px] text-slate-400">{s.detail||'Address not provided'}</div><a className="mt-1 inline-block text-[10px] font-bold text-emeraldx hover:underline" href={s.mapsUrl} target="_blank" rel="noopener noreferrer">View on Google Maps ↗</a></div>)}</div>}
         </Panel>
+  const routeOverviewPanel=<Panel className="p-4"><div className="text-xs font-extrabold">Route overview</div><div className="mt-3 flex items-center gap-2"><div className="h-2 w-2 rounded-full bg-emeraldx"/><div className="text-xs font-semibold">{origin?origin.name:'Choose origin'}</div></div><div className="ml-1 my-1 h-5 border-l border-dashed border-slate-600"/><div className="flex items-center gap-2"><div className="h-2 w-2 rounded-full bg-amberx"/><div className="text-xs font-semibold">{destination?destination.name:'Choose destination'}</div></div><div className="mt-3 grid grid-cols-2 gap-2 border-t border-white/10 pt-3"><div><div className="text-[10px] text-slate-500">Google distance</div><b>{hasGoogleRoute?`${fmt(distance)} km`:'—'}</b></div><div><div className="text-[10px] text-slate-500">Google drive time</div><b>{hasGoogleRoute?fmtTime(duration):'—'}</b></div></div></Panel>
+  const rangeMonitorPanel=<Panel className="p-4"><div className="mb-3 flex items-center gap-2 text-xs font-extrabold"><Activity size={15} className="text-emeraldx"/> Range & dead-zone monitor</div><div className="flex items-end justify-between"><span className="text-[10px] text-slate-500">Estimated remaining range</span><b className={lowRange?'text-rose-300':'text-emeraldx'}>{fmt(currentRange)} km</b></div><div className="mt-2 h-2 overflow-hidden rounded-full bg-white/10"><div className={cx('h-full rounded-full',lowRange?'bg-rose-400':'bg-emeraldx')} style={{width:`${hasGoogleRoute&&currentRange>0?Math.min(100,distance/currentRange*100):0}%`}}/></div><div className="mt-2 text-[10px] leading-4 text-slate-400">{!origin||!destination?'Choose an origin and destination to check range.':!hasGoogleRoute?'Waiting for a Google driving route.':lowRange?'Range limit falls before destination.':'Estimated range covers the route.'}</div></Panel>
   const sidePanels=<>
-        <Panel className="p-4"><div className="text-xs font-extrabold">Route overview</div><div className="mt-3 flex items-center gap-2"><div className="h-2 w-2 rounded-full bg-emeraldx"/><div className="text-xs font-semibold">{origin?origin.name:'Choose origin'}</div></div><div className="ml-1 my-1 h-5 border-l border-dashed border-slate-600"/><div className="flex items-center gap-2"><div className="h-2 w-2 rounded-full bg-amberx"/><div className="text-xs font-semibold">{destination?destination.name:'Choose destination'}</div></div><div className="mt-3 grid grid-cols-2 gap-2 border-t border-white/10 pt-3"><div><div className="text-[10px] text-slate-500">Google distance</div><b>{hasGoogleRoute?`${fmt(distance)} km`:'—'}</b></div><div><div className="text-[10px] text-slate-500">Google drive time</div><b>{hasGoogleRoute?fmtTime(duration):'—'}</b></div></div></Panel>
-        <Panel className="p-4"><div className="mb-3 flex items-center gap-2 text-xs font-extrabold"><Activity size={15} className="text-emeraldx"/> Range & dead-zone monitor</div><div className="flex items-end justify-between"><span className="text-[10px] text-slate-500">Estimated remaining range</span><b className={lowRange?'text-rose-300':'text-emeraldx'}>{fmt(currentRange)} km</b></div><div className="mt-2 h-2 overflow-hidden rounded-full bg-white/10"><div className={cx('h-full rounded-full',lowRange?'bg-rose-400':'bg-emeraldx')} style={{width:`${hasGoogleRoute&&currentRange>0?Math.min(100,distance/currentRange*100):0}%`}}/></div><div className="mt-2 text-[10px] leading-4 text-slate-400">{!origin||!destination?'Choose an origin and destination to check range.':!hasGoogleRoute?'Waiting for a Google driving route.':lowRange?'Range limit falls before destination.':'Estimated range covers the route.'}</div></Panel>
         {stationFinderPanel}
         <div className="rounded-xl border border-white/10 bg-ink/85 p-3 text-[10px] leading-4 text-slate-400 backdrop-blur"><Info size={13} className="mb-1 text-amberx"/> Blue line, distance, and drive time come from Google Routes (traffic-aware when available). If Google cannot calculate a route, no substitute route or ETA is shown. Use “Pin (choose on map)” to set a custom waypoint.</div></>
   return <div ref={plannerScreenRef} className="planner-screen relative h-[100dvh] min-h-[480px] w-full overflow-hidden bg-slate-950 text-white lg:min-h-[720px]">
@@ -732,11 +732,6 @@ function TripPlanner({config,onChangeVehicle,initialLocation,theme,onToggleTheme
             <div className="planner-mobile-route-summary" title={`${origin?.name||'Choose origin'} to ${destination?.name||'Choose destination'}`}><span>{origin?.name||'Choose origin'}</span><ArrowRight size={13}/><span>{destination?.name||'Choose destination'}</span></div>
             <div className="planner-mobile-vehicle-summary"><span>{vehicleName}</span><span>· Level {config.level}%</span></div>
           </div>
-          <button type="button" onClick={()=>{calculate(origin,destination,true);setMobileDrawerOpen(false)}} disabled={!origin||!destination} className="planner-mobile-recalculate disabled:opacity-40"><Navigation size={15}/> Find alternative routes</button>
-          <div className="planner-mobile-peek">
-            <div className="planner-mobile-peek-heading"><Route size={13}/><span>Trip guidance</span><b>{hasGoogleRoute?money(isHybrid?hybridFuelCost+hybridElectricCost:totalCost,rates.usdToKhr):'Trip cost estimate below'}</b></div>
-            <p>{recommendation()}</p>
-          </div>
         </div>
         <div className="planner-mobile-content flex flex-col gap-3 [direction:ltr]">
         <Panel className="p-4">
@@ -751,13 +746,8 @@ function TripPlanner({config,onChangeVehicle,initialLocation,theme,onToggleTheme
           <div className="mt-2 text-center text-[10px] text-slate-500">{routeStatus}</div>
           {showAltRoutes&&routeChoices.length>1&&<div className="mt-3 space-y-2" aria-label="Available routes">{routeChoices.map((choice,index)=><button type="button" key={`${choice.label}-${index}`} onClick={()=>selectRoute(index)} aria-pressed={selectedRouteIndex===index} className={cx('flex w-full items-center justify-between rounded-lg border p-3 text-left text-xs transition',selectedRouteIndex===index?'border-emeraldx/50 bg-emeraldx/10':'border-white/10 bg-black/20 hover:border-white/20')}><span><b className={selectedRouteIndex===index?'text-emeraldx':'text-slate-200'}>{choice.label}</b><span className="mt-1 block text-[10px] text-slate-500">{fmt(choice.distanceMeters/1000)} km · {fmtTime(choice.durationMillis/60000)}</span></span>{selectedRouteIndex===index&&<Check size={15} className="text-emeraldx"/>}</button>)}</div>}
         </Panel>
-        <Panel className="p-4">
-          <div className="mb-3 flex items-center gap-2"><Route size={16} className="text-emeraldx"/><div className="text-sm font-extrabold">Trip guidance</div><span className="ml-auto rounded-full bg-emeraldx/10 px-2 py-1 text-[9px] font-bold text-emeraldx">RULE-BASED</span></div>
-          <p className="text-xs leading-5 text-slate-300">{recommendation()}</p>
-          {lowRange&&<div className="mt-3 flex items-start gap-2 rounded-xl border border-rose-400/25 bg-rose-400/10 p-3 text-[11px] leading-4 text-rose-200"><ShieldAlert size={16} className="shrink-0"/> Range warning: estimated range is shorter than the trip. Do not depart without a confirmed stop.</div>}
-          <div className="mt-3 flex flex-wrap gap-2">{chips.map(c=><button key={c} onClick={()=>chipAction(c)} className="rounded-full border border-white/10 px-2.5 py-1.5 text-[10px] text-slate-300 hover:border-emeraldx/40 hover:text-emeraldx">{c}</button>)}</div>
-          {prompt&&<div className="mt-3 rounded-lg bg-white/5 p-3 text-[11px] leading-5 text-slate-300">{prompt==='Compare EV vs Gas cost'?(hasGoogleRoute?`For this distance, illustrative EV cost is ${money(evCost,rates.usdToKhr)} versus gasoline at ${money(gasCost,rates.usdToKhr)}. Estimated difference: ${money(save,rates.usdToKhr)}.`:'Calculate a Google route first to compare trip costs.'):prompt==='Find 24/7 stops only'?'Station list opened below. Filter for compatible fuel or connectors and confirm the location before travel.':'Eco tip: maintain a steady highway speed, avoid hard acceleration, check tire pressure and reduce unnecessary cargo.'}</div>}
-        </Panel>
+        {routeOverviewPanel}
+        {rangeMonitorPanel}
         <Panel className="p-4">
           <div className="mb-3 flex items-center justify-between"><div className="flex items-center gap-2 text-sm font-extrabold"><CircleDollarSign size={16} className="text-amberx"/> Trip cost estimate</div><button onClick={()=>setShowRates(x=>!x)} className="text-[10px] font-bold text-emeraldx">{showRates?'Close':'Edit rates'}</button></div>
           <div className="grid grid-cols-2 gap-2"><div className="rounded-xl bg-black/20 p-3"><div className="text-[10px] text-slate-500">Google distance</div><div className="mt-1 text-lg font-black">{hasGoogleRoute?fmt(distance):'—'} <small className="text-xs text-slate-400">{hasGoogleRoute?'km':''}</small></div></div><div className="rounded-xl bg-black/20 p-3"><div className="text-[10px] text-slate-500">Google drive time</div><div className="mt-1 text-lg font-black">{hasGoogleRoute?fmtTime(duration):'—'}</div></div></div>
@@ -811,14 +801,11 @@ export default function App(){
   const [gateBackStep,setGateBackStep]=useState(0)
   const locationCheckRef=useRef(false)
   const clearTripLocations=()=>{
-    try{
-      const saved=JSON.parse(sessionStorage.getItem('smartroute-trip')||'{}')
-      sessionStorage.setItem('smartroute-trip',JSON.stringify({...saved,origin:null,destination:null,originName:'',destinationName:'',route:[],distance:0,duration:0}))
-    }catch{}
+    try{sessionStorage.removeItem('smartroute-trip')}catch{}
   }
   const setStep=next=>{
     const target=paths[next]
-    if(next===1&&step===3)clearTripLocations()
+    if(step===3&&next!==3)clearTripLocations()
     if(step===1&&next!==1){
       setTripConfig(config)
       setConfig(defaultVehicleConfig)
@@ -833,7 +820,7 @@ export default function App(){
     if(!known)window.history.replaceState({step:0},'','/')
     const onPop=()=>{
       const next=stepFromPath()
-      if(next===1&&step===3)clearTripLocations()
+      if(step===3&&next!==3)clearTripLocations()
       if(step===1&&next!==1){setTripConfig(config);setConfig(defaultVehicleConfig)}
       setStepState(next)
     }

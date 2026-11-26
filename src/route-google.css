@@ -17,6 +17,13 @@
     max-width: 408px; height: 100%;
     background: var(--surface); color: var(--text-primary);
     border-radius: 12px; box-shadow: var(--gm-shadow);
+    will-change: transform;
+    transition: transform .38s cubic-bezier(.22, 1, .36, 1);
+  }
+  .planner-screen #mobile-route-drawer.left-panel-hidden {
+    display: block;
+    transform: translateX(calc(-100% - 24px));
+    pointer-events: none;
   }
   .planner-screen #mobile-route-drawer .planner-mobile-content { gap: 0; }
   /* show the panels that normally live in the right column */
@@ -47,7 +54,7 @@
   .planner-screen #mobile-route-drawer [aria-label="Available routes"] button[aria-pressed="true"] { background: rgba(32, 214, 154, .12) !important; }
 
   /* Header: chips floating on the map, to the right of the sheet */
-  .planner-screen .planner-header { top: 12px; left: 436px; right: 12px; }
+  .planner-screen .planner-header { top: 12px; left: 436px; right: 12px; will-change: left; transition: left .38s cubic-bezier(.22, 1, .36, 1); }
   .planner-screen:has(.left-panel-hidden) .planner-header { left: 12px; }
   .planner-screen .planner-header .header-action,
   .planner-screen .planner-header .theme-toggle {
@@ -69,6 +76,10 @@
     left: 420px !important; top: 50% !important; transform: translateY(-50%);
     width: 20px; height: 48px; border: 0; border-radius: 0 8px 8px 0;
     box-shadow: var(--gm-chip-shadow);
+  }
+  .planner-screen [aria-label="Hide left menu"],
+  .planner-screen [aria-label="Show left menu"] {
+    transition: left .38s cubic-bezier(.22, 1, .36, 1), background-color .15s ease, border-color .15s ease, color .15s ease;
   }
   .planner-screen [aria-label="Show left menu"] { top: 50%; transform: translateY(-50%); }
 }
