@@ -62,7 +62,7 @@
   .planner-screen .planner-header .brand-lockup {
     position: fixed; z-index: 700; bottom: 12px; left: 50%; transform: translateX(-50%);
     height: auto; padding: 0; border: 0; border-radius: 0;
-    background: transparent; box-shadow: none; pointer-events: auto; cursor: pointer;
+    background: transparent; box-shadow: none; pointer-events: none; cursor: default;
   }
   .planner-screen .planner-header .brand-name { color: #202a2e; }
   .planner-screen .planner-header .brand-name span { color: #08724f; }

@@ -150,7 +150,7 @@ input[type=number] { font-variant-numeric: tabular-nums; }
 .pick-mode .google-map { cursor: crosshair; }
 
 .app-header { display: flex; align-items: center; gap: 12px; min-height: 48px; }
-.brand-lockup { display: flex; align-items: center; gap: 10px; min-width: 0; user-select: none; }
+.brand-lockup { display: flex; align-items: center; gap: 10px; min-width: 0; border: 0; background: transparent; padding: 0; text-align: left; user-select: none; }
 .brand-mark { width: 34px; height: 34px; object-fit: contain; }
 .brand-name { color: var(--text-primary); font-size: 17px; font-weight: 760; letter-spacing: -.025em; white-space: nowrap; }
 .brand-name span { color: var(--accent-text); }
@@ -300,7 +300,7 @@ input[type=number] { font-variant-numeric: tabular-nums; }
     display: flex; align-items: center; gap: 6px;
     border: 0; border-radius: 0; background: transparent; padding: 0; box-shadow: none;
     color: #202a2e; font-size: 13px; font-weight: 800; white-space: nowrap; user-select: none;
-    pointer-events: auto; cursor: pointer;
+    pointer-events: none; cursor: default;
   }
   .mobile-map-brand img { width: 22px; height: 22px; flex: 0 0 22px; object-fit: contain; }
   .mobile-map-brand span { overflow: hidden; text-overflow: ellipsis; }

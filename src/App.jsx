@@ -264,10 +264,13 @@ function BrandHeader({theme,onToggleTheme,onHome=()=>window.location.assign('/')
   const nextTheme=theme==='light'?'dark':'light'
   return <header className={cx('app-header',className)}>
     {action}
-    <button type="button" onClick={onHome} className="brand-lockup text-left" aria-label="Return to SmartRoute AI home">
+    {onHome?<button type="button" onClick={onHome} className="brand-lockup text-left" aria-label="Return to SmartRoute AI home">
       <img src="/favicon.svg" alt="" className="brand-mark"/>
       <div><div className="brand-name">SmartRoute <span>AI</span></div><div className="brand-caption">Cambodia trip planner</div></div>
-    </button>
+    </button>:<div className="brand-lockup">
+      <img src="/favicon.svg" alt="" className="brand-mark"/>
+      <div><div className="brand-name">SmartRoute <span>AI</span></div><div className="brand-caption">Cambodia trip planner</div></div>
+    </div>}
     <div className="header-spacer"/>
     {rightAction}
     <button type="button" onClick={onToggleTheme} className="theme-toggle" aria-label={`Switch to ${nextTheme} mode`} aria-pressed={theme==='dark'} title={`Switch to ${nextTheme} mode`}>
@@ -380,9 +383,9 @@ function LocationGate({onSuccess,onBack,theme,onToggleTheme}) {
     },
   }[error]
 
-  return <main className="location-screen min-h-[100dvh] px-5 py-4 sm:px-8">
-    <div className="mx-auto flex min-h-[calc(100dvh-2rem)] max-w-6xl flex-col">
-    <BrandHeader theme={theme} onToggleTheme={onToggleTheme} className="py-3"/>
+  return <main className="location-screen min-h-[100dvh] px-5 pb-4 sm:px-8">
+    <div className="mx-auto flex min-h-[calc(100dvh-1rem)] max-w-6xl flex-col">
+    <BrandHeader theme={theme} onToggleTheme={onToggleTheme} className="py-6"/>
     <section className="grid flex-1 place-items-center py-8">
     <div className="relative w-full max-w-lg">
       <Panel className="p-6 text-center shadow-2xl sm:p-9">
@@ -421,8 +424,8 @@ function Setup({onBack,onGenerate,config,setConfig,theme,onToggleTheme}) {
   const set=(key,value)=>setConfig(p=>({...p,[key]:value}))
   useEffect(()=>{if(!config.modified&&selected)setConfig(p=>({...p,energy:selected.energy,capacity:selected.capacity,consumption:selected.consumption,model:selected.id}))},[config.category,config.model,config.modified])
   const Icon=categoryIcons[config.category]||CarFront
-  return <div className="vehicle-screen min-h-screen px-4 py-5 sm:px-8"><div className="mx-auto max-w-6xl">
-    <BrandHeader theme={theme} onToggleTheme={onToggleTheme} className="mb-5 py-2"/>
+  return <div className="vehicle-screen min-h-screen px-5 pb-5 sm:px-8"><div className="mx-auto max-w-6xl">
+    <BrandHeader theme={theme} onToggleTheme={onToggleTheme} className="mb-1 py-6"/>
     <button onClick={onBack} className="back-link mb-5 flex items-center gap-2 text-sm text-slate-400 hover:text-white"><ArrowLeft size={16}/> Back</button>
     <div className="mb-8"><div className="text-xs font-bold uppercase tracking-[.2em] text-emeraldx">Step 02 / Vehicle profile</div><h1 className="mt-2 text-3xl font-black sm:text-4xl">What are you driving?</h1><p className="mt-2 text-slate-400">We'll use your vehicle's real-world efficiency to estimate range and trip costs.</p></div>
     <div className="grid gap-6 lg:grid-cols-[1.2fr_.8fr]">
@@ -710,13 +713,13 @@ function TripPlanner({config,onChangeVehicle,onHome,initialLocation,theme,onTogg
         <div className="rounded-xl border border-white/10 bg-ink/85 p-3 text-[10px] leading-4 text-slate-400 backdrop-blur"><Info size={13} className="mb-1 text-amberx"/> Blue line, distance, and drive time come from Google Routes (traffic-aware when available). If Google cannot calculate a route, no substitute route or ETA is shown. Use “Pin (choose on map)” to set a custom waypoint.</div></>
   return <div ref={plannerScreenRef} className="planner-screen relative h-[100dvh] min-h-[480px] w-full overflow-hidden bg-slate-950 text-white lg:min-h-[720px]">
     <div className={cx('planner-map-layer absolute inset-0',mapClickMode&&'pick-mode')}><MapView origin={origin} destination={destination} route={routePoints} stations={googleStations??[]} filter={filter} onMapClick={handleMapClick} rangePoint={rangePoint} initialLocation={initialLocation} mapType={mapType} onMapTypeChange={setMapType}/></div>
-    <BrandHeader theme={theme} onToggleTheme={onToggleTheme} onHome={onHome} className="planner-header" action={<button onClick={onChangeVehicle} aria-label="Back to vehicle profile" className="header-action"><ArrowLeft size={16}/><span>Vehicle</span></button>} rightAction={<>
+    <BrandHeader theme={theme} onToggleTheme={onToggleTheme} onHome={null} className="planner-header" action={<button onClick={onChangeVehicle} aria-label="Back to vehicle profile" className="header-action"><ArrowLeft size={16}/><span>Vehicle</span></button>} rightAction={<>
       <button type="button" onClick={()=>setMapType(current=>current==='roadmap'?'hybrid':'roadmap')} aria-label={mapType==='roadmap'?'Switch to satellite map':'Switch to street map'} title={mapType==='roadmap'?'Satellite view':'Street view'} className="header-action desktop-map-layer-control"><Layers size={16}/><span>{mapType==='roadmap'?'Satellite':'Map'}</span></button>
       <button onClick={()=>setShowLeft(x=>!x)} aria-label={showLeft?'Hide menu and show map':'Show menu'} className="mobile-plan-toggle"><span className="mobile-plan-label">{showLeft?'Map':'Plan'}</span>{showLeft?<MapIcon size={16}/>:<Route size={16}/>}</button>
     </>}/>
     <header className="mobile-map-header" aria-label="Route map controls">
       <button type="button" onClick={onChangeVehicle} aria-label="Back" className="mobile-map-control mobile-map-back"><ArrowLeft size={18}/><span>Back</span></button>
-      <button type="button" onClick={onHome} className="mobile-map-brand" aria-label="Return to SmartRoute AI home"><img src="/favicon.svg" alt=""/><span>SmartRoute <b>AI</b></span></button>
+      <div className="mobile-map-brand" aria-label="SmartRoute AI"><img src="/favicon.svg" alt=""/><span>SmartRoute <b>AI</b></span></div>
       <button type="button" onClick={()=>setMapType(current=>current==='roadmap'?'hybrid':'roadmap')} aria-label={mapType==='roadmap'?'Switch to satellite map':'Switch to street map'} title={mapType==='roadmap'?'Satellite view':'Street view'} className="mobile-map-control mobile-map-layer"><Layers size={17}/><span>{mapType==='roadmap'?'Layers':'Map'}</span></button>
       <button type="button" onClick={onToggleTheme} aria-label={`Switch to ${theme==='light'?'dark':'light'} mode`} aria-pressed={theme==='dark'} className="mobile-map-control mobile-map-theme">{theme==='light'?<Moon size={16}/>:<Sun size={16}/>}<span>{theme==='light'?'Dark':'Light'}</span></button>
     </header>
