@@ -260,17 +260,14 @@ const repo='https://github.com/OengDida/SmartRoute-AI'
 function FooterCol({title,children}){return <div><div className="mb-2 text-sm font-bold text-white">{title}</div><ul className="space-y-0.5">{children}</ul></div>}
 function FLink({href,onClick,external,children}){return <li><a href={href} onClick={onClick?e=>{e.preventDefault();onClick()}:undefined} {...(external?{target:'_blank',rel:'noopener noreferrer'}:{})} className="text-sm leading-6 text-slate-400 transition hover:text-emeraldx">{children}</a></li>}
 function FText({children}){return <li className="text-sm leading-6 text-slate-500">{children}</li>}
-function BrandHeader({theme,onToggleTheme,onHome,action,rightAction,className=''}){
+function BrandHeader({theme,onToggleTheme,onHome=()=>window.location.assign('/'),action,rightAction,className=''}){
   const nextTheme=theme==='light'?'dark':'light'
   return <header className={cx('app-header',className)}>
     {action}
-    {onHome?<button type="button" onClick={onHome} className="brand-lockup text-left" aria-label="Return to SmartRoute AI home">
+    <button type="button" onClick={onHome} className="brand-lockup text-left" aria-label="Return to SmartRoute AI home">
       <img src="/favicon.svg" alt="" className="brand-mark"/>
       <div><div className="brand-name">SmartRoute <span>AI</span></div><div className="brand-caption">Cambodia trip planner</div></div>
-    </button>:<div className="brand-lockup">
-      <img src="/favicon.svg" alt="" className="brand-mark"/>
-      <div><div className="brand-name">SmartRoute <span>AI</span></div><div className="brand-caption">Cambodia trip planner</div></div>
-    </div>}
+    </button>
     <div className="header-spacer"/>
     {rightAction}
     <button type="button" onClick={onToggleTheme} className="theme-toggle" aria-label={`Switch to ${nextTheme} mode`} aria-pressed={theme==='dark'} title={`Switch to ${nextTheme} mode`}>
