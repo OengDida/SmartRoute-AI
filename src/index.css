@@ -300,7 +300,7 @@ input[type=number] { font-variant-numeric: tabular-nums; }
     display: flex; align-items: center; gap: 6px;
     border: 0; border-radius: 0; background: transparent; padding: 0; box-shadow: none;
     color: #202a2e; font-size: 13px; font-weight: 800; white-space: nowrap; user-select: none;
-    pointer-events: auto; cursor: pointer;
+    pointer-events: none; cursor: default;
   }
   .mobile-map-brand img { width: 22px; height: 22px; flex: 0 0 22px; object-fit: contain; }
   .mobile-map-brand span { overflow: hidden; text-overflow: ellipsis; }
