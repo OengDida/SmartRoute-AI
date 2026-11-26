@@ -719,7 +719,7 @@ function TripPlanner({config,onChangeVehicle,onHome,initialLocation,theme,onTogg
     </>}/>
     <header className="mobile-map-header" aria-label="Route map controls">
       <button type="button" onClick={onChangeVehicle} aria-label="Back" className="mobile-map-control mobile-map-back"><ArrowLeft size={18}/><span>Back</span></button>
-      <div className="mobile-map-brand" aria-label="SmartRoute AI"><img src="/favicon.svg" alt=""/><span>SmartRoute <b>AI</b></span></div>
+      <button type="button" onClick={onHome} className="mobile-map-brand" aria-label="Return to SmartRoute AI home"><img src="/favicon.svg" alt=""/><span>SmartRoute <b>AI</b></span></button>
       <button type="button" onClick={()=>setMapType(current=>current==='roadmap'?'hybrid':'roadmap')} aria-label={mapType==='roadmap'?'Switch to satellite map':'Switch to street map'} title={mapType==='roadmap'?'Satellite view':'Street view'} className="mobile-map-control mobile-map-layer"><Layers size={17}/><span>{mapType==='roadmap'?'Layers':'Map'}</span></button>
       <button type="button" onClick={onToggleTheme} aria-label={`Switch to ${theme==='light'?'dark':'light'} mode`} aria-pressed={theme==='dark'} className="mobile-map-control mobile-map-theme">{theme==='light'?<Moon size={16}/>:<Sun size={16}/>}<span>{theme==='light'?'Dark':'Light'}</span></button>
     </header>
@@ -910,5 +910,5 @@ export default function App(){
       ?<Setup onBack={()=>setStep(0)} onGenerate={continueToMap} config={config} setConfig={setConfig} theme={theme} onToggleTheme={toggleTheme}/>
       :visibleStep===2
         ?<LocationGate onSuccess={finishLocation} onBack={()=>setStep(gateBackStep)} theme={theme} onToggleTheme={toggleTheme}/>
-        :<TripPlanner config={tripConfig} initialLocation={initialLocation} onChangeVehicle={()=>setStep(1)} onHome={()=>setStep(0)} theme={theme} onToggleTheme={toggleTheme}/>
+        :<TripPlanner config={tripConfig} initialLocation={initialLocation} onChangeVehicle={()=>setStep(1)} onHome={()=>window.location.assign('/')} theme={theme} onToggleTheme={toggleTheme}/>
 }
