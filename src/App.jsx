@@ -274,7 +274,7 @@ function BrandHeader({theme,onToggleTheme,onHome=()=>window.location.assign('/')
     <div className="header-spacer"/>
     {rightAction}
     <button type="button" onClick={onToggleTheme} className="theme-toggle" aria-label={`Switch to ${nextTheme} mode`} aria-pressed={theme==='dark'} title={`Switch to ${nextTheme} mode`}>
-      {theme==='light'?<Moon size={16}/>:<Sun size={16}/>}<span>{nextTheme==='dark'?'Dark':'Light'}</span>
+      {theme==='light'?<Moon size={16}/>:<Sun size={16}/>}
     </button>
   </header>
 }
@@ -792,7 +792,7 @@ export default function App(){
     try{localStorage.setItem('smartroute-theme',next)}catch{}
     setTheme(next)
   }
-  useEffect(()=>{document.querySelector('meta[name="theme-color"]')?.setAttribute('content',theme==='dark'?'#1D2429':'#F4F6F4')},[theme])
+  useEffect(()=>{document.querySelector('meta[name="theme-color"]')?.setAttribute('content',theme==='dark'?'#08090A':'#F4F6F4')},[theme])
   const [config,setConfig]=useState(defaultVehicleConfig)
   const [tripConfig,setTripConfig]=useState(()=>{
     try{return JSON.parse(sessionStorage.getItem('smartroute-vehicle-config')||'null')||defaultVehicleConfig}catch{return defaultVehicleConfig}
