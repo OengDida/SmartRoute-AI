@@ -28,15 +28,15 @@
 :root[data-theme="dark"] {
   color-scheme: dark;
   --accent-text: #20d69a;
-  --canvas: #121517;
-  --surface: #191d20;
-  --surface-rgb: 25, 29, 32;
-  --surface-subtle: #1f2428;
-  --surface-raised: #262c30;
+  --canvas: #16191c;
+  --surface: #1d2125;
+  --surface-rgb: 29, 33, 37;
+  --surface-subtle: #23282d;
+  --surface-raised: #2b3137;
   --text-primary: #eceeed;
   --text-secondary: #a8b0ad;
   --text-muted: #7f8985;
-  --border: #2e3539;
+  --border: #343b41;
   --focus-ring: rgba(32, 214, 154, .22);
   --amber-text: #f7c56c;
   --blue-text: #a9cdf7;
