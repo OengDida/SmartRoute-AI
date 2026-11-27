@@ -28,21 +28,33 @@
 :root[data-theme="dark"] {
   color-scheme: dark;
   --accent-text: #20d69a;
-  --canvas: #1d2429;
-  --surface: #252d33;
-  --surface-rgb: 37, 45, 51;
-  --surface-subtle: #2b343a;
-  --surface-raised: #323c43;
-  --text-primary: #f1f5f3;
-  --text-secondary: #c0cbc6;
-  --text-muted: #9aa8a2;
-  --border: #3c484e;
-  --focus-ring: rgba(32, 214, 154, .28);
+  --canvas: #121517;
+  --surface: #191d20;
+  --surface-rgb: 25, 29, 32;
+  --surface-subtle: #1f2428;
+  --surface-raised: #262c30;
+  --text-primary: #eceeed;
+  --text-secondary: #a8b0ad;
+  --text-muted: #7f8985;
+  --border: #2e3539;
+  --focus-ring: rgba(32, 214, 154, .22);
   --amber-text: #f7c56c;
   --blue-text: #a9cdf7;
   --red-text: #ffb6b2;
   --violet-text: #d0b8ff;
 }
+/* Dark mode: flat surfaces, hairline borders, no elevation shadows. */
+:root[data-theme="dark"] [class~="shadow-2xl"],
+:root[data-theme="dark"] [class~="shadow-xl"],
+:root[data-theme="dark"] .welcome-overview,
+:root[data-theme="dark"] .mobile-map-control,
+:root[data-theme="dark"] .mobile-route-drawer-tab,
+:root[data-theme="dark"] .planner-mobile-panel,
+:root[data-theme="dark"] .google-map > [class~="text-white"] > div,
+:root[data-theme="dark"] .google-place-autocomplete::part(prediction-list) { box-shadow: none !important; }
+:root[data-theme="dark"] .mobile-route-scrim { background: rgba(0, 0, 0, .6); }
+:root[data-theme="dark"] .mobile-map-brand { color: var(--text-primary); }
+:root[data-theme="dark"] .mobile-map-brand b { color: var(--accent-text); }
 * { box-sizing: border-box; }
 html, body, #root {
   width: 100%;
